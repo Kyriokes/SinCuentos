@@ -7,6 +7,7 @@ import { CLUBS, COMPETITIONS, TITLES, YEAR_BOUNDS } from '../../data';
 import { useStore } from '../../state/store';
 import { BadgeIcon } from '../Badge';
 import { Cafecito } from '../Cafecito';
+import { assignLineColors } from '../chart/colors';
 import { RaceChart } from '../chart/RaceChart';
 import { CATEGORY_LABEL } from '../labels';
 import { RangeSlider } from '../RangeSlider';
@@ -43,6 +44,29 @@ export function Resultado({ data = REAL }: { data?: ResultadoData }) {
   const timeline = useMemo(() => computeTimeline(data.titles, weights, filters, data.clubs), [data, weights, filters]);
   const clubById = useMemo(() => new Map(data.clubs.map((c) => [c.id, c])), [data]);
   const competitionName = useMemo(() => new Map(data.competitions.map((c) => [c.id, c.name])), [data]);
+
+  // Los colores se reparten de arriba a abajo entre los destacados; al cambiar el ranking, se reparten de nuevo.
+  const lineColors = useMemo(
+    () => assignLineColors(ranking.slice(0, HIGHLIGHT).flatMap((r) => clubById.get(r.clubId) ?? [])),
+    [ranking, clubById],
+  );
+
+  // Sin amateurismo, los años anteriores al profesionalismo quedan vacíos: el slider no los ofrece.
+  const firstProfessional = useMemo(
+    () => Math.min(data.bounds.max, ...data.titles.filter((t) => t.era === 'profesional').map((t) => t.year)),
+    [data],
+  );
+  const sliderMin = filters.includeAmateur ? data.bounds.min : firstProfessional;
+
+  useEffect(() => {
+    if (!filters.includeAmateur && filters.from < firstProfessional) setFilters({ from: firstProfessional });
+  }, [filters.includeAmateur, filters.from, firstProfessional, setFilters]);
+
+  const toggleAmateur = (include: boolean) => {
+    // Al volver a contarlo, si el rango arrancaba en el primer año profesional, se estira hasta el principio.
+    const from = include && filters.from === firstProfessional ? data.bounds.min : Math.max(filters.from, include ? data.bounds.min : firstProfessional);
+    setFilters({ includeAmateur: include, from, to: Math.max(filters.to, from) });
+  };
 
   const empty = ranking.length === 0;
   const racing = step === 'carrera' && !empty;
@@ -89,10 +113,10 @@ export function Resultado({ data = REAL }: { data?: ResultadoData }) {
   const controls = (
     <div className="controles">
       <label className="check">
-        <input type="checkbox" checked={filters.includeAmateur} onChange={(e) => setFilters({ includeAmateur: e.target.checked })} />
+        <input type="checkbox" checked={filters.includeAmateur} onChange={(e) => toggleAmateur(e.target.checked)} />
         <span>Contar el amateurismo</span>
       </label>
-      <RangeSlider min={data.bounds.min} max={data.bounds.max} from={filters.from} to={filters.to} onChange={(from, to) => setFilters({ from, to })} />
+      <RangeSlider min={sliderMin} max={data.bounds.max} from={filters.from} to={filters.to} onChange={(from, to) => setFilters({ from, to })} />
     </div>
   );
 
@@ -137,6 +161,7 @@ export function Resultado({ data = REAL }: { data?: ResultadoData }) {
         animate={step === 'carrera'}
         onDone={() => go('resultado')}
         onYear={setRaceIndex}
+        colors={lineColors}
       />
 
       {racing && (
@@ -152,7 +177,10 @@ export function Resultado({ data = REAL }: { data?: ResultadoData }) {
                 <li key={s.clubId} data-testid="vivo">
                   <span className="display puesto">{i + 1}</span>
                   {club && <BadgeIcon club={club} size={30} />}
-                  <span className="club">{club?.name ?? s.clubId}</span>
+                  <span className="club">
+                    {club?.name ?? s.clubId}
+                    {lineColors.has(s.clubId) && <i className="muestra" style={{ background: lineColors.get(s.clubId) }} />}
+                  </span>
                   <span className="display puntos">{s.points}</span>
                 </li>
               );
@@ -164,6 +192,7 @@ export function Resultado({ data = REAL }: { data?: ResultadoData }) {
         <>
           {controls}
 
+          <p className="pista">Tocá un club para ver sus títulos</p>
           <ol className="tabla">
             {ranking.map((r) => {
               const club = clubById.get(r.clubId);
@@ -175,11 +204,17 @@ export function Resultado({ data = REAL }: { data?: ResultadoData }) {
                     {club && <BadgeIcon club={club} size={34} />}
                     <span className="club">
                       {club?.name ?? r.clubId}
-                      <small>{r.vitrina === 1 ? '1 copa en la vitrina' : `${r.vitrina} copas en la vitrina`}</small>
+                      <small>
+                        {lineColors.has(r.clubId) && <i className="muestra" data-swatch style={{ background: lineColors.get(r.clubId) }} />}
+                        {r.vitrina === 1 ? '1 copa secundaria' : `${r.vitrina} copas secundarias`}
+                      </small>
                     </span>
                     <span className="display puntos" data-testid="puntos">
                       {r.points}
                     </span>
+                    <svg className="flecha" data-chevron viewBox="0 0 16 16" width={16} height={16} aria-hidden="true">
+                      <path d="M3 6L8 11L13 6" />
+                    </svg>
                   </button>
                   {isOpen && <Desglose result={r} weights={weights} titles={titlesOf(r.clubId)} competitionName={competitionName} />}
                 </li>

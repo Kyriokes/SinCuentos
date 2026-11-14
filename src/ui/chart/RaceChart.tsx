@@ -16,6 +16,8 @@ interface Props {
   onDone(): void;
   /** Avisa cada vez que la carrera entra en un año nuevo (índice dentro de `timeline.years`). */
   onYear?(index: number): void;
+  /** Color de la línea de cada club destacado. Sin esto, las líneas van en cal. */
+  colors?: Map<string, string>;
 }
 
 const HEIGHT = 420;
@@ -29,7 +31,7 @@ export const RACE_SECONDS = 10;
  * La carrera es el contenido, no un adorno: la dispara el usuario, se puede saltear y por eso
  * corre también cuando el sistema pide menos movimiento.
  */
-export function RaceChart({ timeline, clubs, highlight, animate, onDone, onYear }: Props) {
+export function RaceChart({ timeline, clubs, highlight, animate, onDone, onYear, colors }: Props) {
   const lastIndex = timeline.years.length - 1;
   const playing = animate && lastIndex > 0;
   const wrap = useRef<HTMLDivElement>(null);
@@ -153,7 +155,16 @@ export function RaceChart({ timeline, clubs, highlight, animate, onDone, onYear 
         <g clipPath="url(#race-clip)">
           {[...layout.paths].reverse().map((p) => {
             const rank = timeline.series.findIndex((s) => s.clubId === p.clubId);
-            return <path key={p.clubId} data-club={p.clubId} className={rank < highlight ? 'race-line' : 'race-line race-line-dim'} d={p.d} />;
+            const lit = rank < highlight;
+            return (
+              <path
+                key={p.clubId}
+                data-club={p.clubId}
+                className={lit ? 'race-line' : 'race-line race-line-dim'}
+                style={lit && colors?.has(p.clubId) ? { stroke: colors.get(p.clubId) } : undefined}
+                d={p.d}
+              />
+            );
           })}
         </g>
         <line ref={cursor} className="race-cursor" x1={plot - PAD} x2={plot - PAD} y1={PAD - 8} y2={HEIGHT - PAD} />

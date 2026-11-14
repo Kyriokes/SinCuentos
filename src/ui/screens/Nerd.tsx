@@ -42,7 +42,7 @@ export function Nerd() {
           </div>
         ))}
       </div>
-      <p className="fine">Supercopas, recopas y copas menores van a la vitrina: no suman puntos, solo desempatan.</p>
+      <p className="fine">Las copas secundarias (supercopas, recopas y copas menores) no suman puntos: solo desempatan.</p>
       <div className="acciones">
         <button type="button" className="btn btn-primary" onClick={() => go('calculo')}>
           Calcular

@@ -109,6 +109,45 @@ test('durante la carrera hay una tabla en vivo con quien ya sumó', () => {
   expect(rows()[0]).toEqual(['beta', '14']);
 });
 
+test('sin amateurismo el slider arranca en el primer año profesional y vuelve al prender', async () => {
+  setup();
+  const desde = () => screen.getByLabelText('Desde') as HTMLInputElement;
+  await userEvent.click(screen.getByLabelText('Contar el amateurismo'));
+  expect(desde().min).toBe('1950');
+  expect(desde().value).toBe('1950');
+  expect(useStore.getState().filters.from).toBe(1950);
+  await userEvent.click(screen.getByLabelText('Contar el amateurismo'));
+  expect(desde().min).toBe('1920');
+  expect(desde().value).toBe('1920');
+});
+
+test('un link sin amateurismo con años amateurs se recorta al abrir', () => {
+  setup({ filters: { includeAmateur: false, from: 1920, to: 2015 } });
+  expect(useStore.getState().filters.from).toBe(1950);
+});
+
+test('las copas que no suman se llaman copas secundarias', () => {
+  setup();
+  const filas = screen.getAllByTestId('fila');
+  expect(filas[0]).toHaveTextContent('0 copas secundarias');
+  expect(filas[1]).toHaveTextContent('1 copa secundaria');
+  expect(screen.queryByText(/vitrina/i)).toBeNull();
+});
+
+test('la tabla avisa que cada club se abre y cada fila lleva su flecha', () => {
+  setup();
+  expect(screen.getByText('Tocá un club para ver sus títulos')).toBeInTheDocument();
+  expect(document.querySelectorAll('[data-testid="fila"] [data-chevron]')).toHaveLength(3);
+});
+
+test('las líneas destacadas llevan el color de su club y la tabla lo repite', () => {
+  setup();
+  const linea = document.querySelector('path[data-club="beta"]') as SVGPathElement;
+  const muestra = document.querySelector('[data-testid="fila"][data-club="beta"] [data-swatch]') as HTMLElement;
+  expect(linea.style.stroke).not.toBe('');
+  expect(muestra.style.background).toBe(linea.style.stroke);
+});
+
 test('un rango sin títulos avisa sin esconder los filtros', () => {
   setup({ filters: { includeAmateur: true, from: 1921, to: 1949 } });
   expect(screen.getByText('Nadie suma puntos acá')).toBeInTheDocument();

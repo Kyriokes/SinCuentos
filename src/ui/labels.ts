@@ -7,8 +7,8 @@ export const CATEGORY_LABEL: Record<Category, string> = {
   tier_b: 'Sudamericana y similares',
   tier_a: 'Libertadores',
   mundo: 'Campeón del mundo',
-  vitrina_nacional: 'Vitrina nacional',
-  tier_c: 'Vitrina internacional',
+  vitrina_nacional: 'Copas secundarias nacionales',
+  tier_c: 'Copas secundarias internacionales',
 };
 
 /** Qué entra en las dos categorías de liga, que no salen del listado de competencias. */

@@ -56,3 +56,4 @@ Reglas:
 - Con movimiento reducido activado, el inicio y el cálculo muestran directamente su estado final. La carrera corre igual: es el contenido, la dispara el usuario y se puede saltear. (Pedido de Sergio, 2026-11-14.)
 - Las líneas del gráfico son escaleras: los puntos se ganan de golpe, no de a poco.
 - Solo los ocho primeros llevan línea a pleno e insignia; el resto queda en cal tenue.
+- Cada línea destacada lleva un color del club, repartido de arriba a abajo en el ranking: primero el color principal, si está tomado el secundario, si no la mezcla de ambos y, como último recurso, un color libre. Nunca verde, porque se pierde en el césped, y los colores oscuros se aclaran. Al cambiar el ranking se reparten de nuevo. (Pedido de Sergio, 2026-11-14.)

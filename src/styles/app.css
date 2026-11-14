@@ -578,7 +578,7 @@
 .fila-btn {
   width: 100%;
   display: grid;
-  grid-template-columns: 34px 34px 1fr auto;
+  grid-template-columns: 34px 34px 1fr auto 16px;
   align-items: center;
   gap: var(--s3);
   padding: 10px 0;
@@ -738,5 +738,58 @@
   .cafecito:hover {
     background: var(--cal);
     color: var(--tinta);
+  }
+}
+
+/* ---------- Detalle desplegable y muestra de color ---------- */
+.pista {
+  margin-top: var(--s5);
+  font-size: 14px;
+  color: var(--cal-suave);
+}
+
+.pista + .tabla {
+  margin-top: var(--s2);
+}
+
+.flecha {
+  transition: transform 0.15s ease-out;
+}
+
+.flecha path {
+  fill: none;
+  stroke: var(--cal);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.fila.abierta .flecha {
+  transform: rotate(180deg);
+}
+
+.muestra {
+  display: inline-block;
+  width: 18px;
+  height: 4px;
+  border-radius: 2px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.vivo .muestra {
+  margin: 0 0 0 8px;
+}
+
+@media (hover: hover) {
+  .fila-btn:hover .club {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flecha {
+    transition: none;
   }
 }
