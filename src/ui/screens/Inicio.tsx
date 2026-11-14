@@ -1,5 +1,6 @@
 import { TITLES, YEAR_BOUNDS } from '../../data';
 import { useStore } from '../../state/store';
+import { Cafecito } from '../Cafecito';
 
 export function Inicio() {
   const start = useStore((s) => s.start);
@@ -27,6 +28,7 @@ export function Inicio() {
       <p className="fine">
         {TITLES.length} títulos oficiales desde {YEAR_BOUNDS.min}. Fuentes: AFA y RSSSF.
       </p>
+      <Cafecito />
     </section>
   );
 }

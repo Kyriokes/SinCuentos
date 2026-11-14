@@ -707,3 +707,36 @@
 .vivo .puntos {
   font-size: 32px;
 }
+
+/* ---------- Cafecito ---------- */
+.cafecito {
+  position: relative;
+  z-index: 1;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  margin-top: var(--s5);
+  padding: 8px var(--s4) 8px var(--s3);
+  border: 2px dashed var(--cal);
+  border-radius: var(--radio);
+  background: var(--cesped);
+  font-weight: 600;
+  font-size: 15px;
+  text-decoration: none;
+}
+
+.cafecito svg path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@media (hover: hover) {
+  .cafecito:hover {
+    background: var(--cal);
+    color: var(--tinta);
+  }
+}

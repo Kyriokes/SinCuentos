@@ -6,6 +6,7 @@ import { SCORED_ORDER } from '../../core/weights';
 import { CLUBS, COMPETITIONS, TITLES, YEAR_BOUNDS } from '../../data';
 import { useStore } from '../../state/store';
 import { BadgeIcon } from '../Badge';
+import { Cafecito } from '../Cafecito';
 import { RaceChart } from '../chart/RaceChart';
 import { CATEGORY_LABEL } from '../labels';
 import { RangeSlider } from '../RangeSlider';
@@ -207,6 +208,7 @@ export function Resultado({ data = REAL }: { data?: ResultadoData }) {
               Empezar de nuevo
             </button>
           </div>
+          <Cafecito />
         </>
       )}
     </section>
