@@ -1,0 +1,41 @@
+{
+  "source": "https://www.afa.com.ar/es/pages/campeones-de-primera-division",
+  "retrieved": "2026-11-14",
+  "sources": {
+    "liga": "Listado 'Campeones de Primera División' de AFA (https://www.afa.com.ar/es/pages/campeones-de-primera-division), contado fila por fila (amateurismo + profesionalismo); coincide con la tabla de totales publicada por RSSSF (https://www.rsssf.org/tablesa/argchamp.html, actualizada el 12/11/2026). Alumni: 9 + 1 como English High School.",
+    "tier_a": "Tabla 'Clubwise list of winners' de RSSSF (https://www.rsssf.org/sacups/copalib.html); conmebol.com no ofrece un listado accesible sin JavaScript.",
+    "mundo": "Tabla 'Clubwise list of winners' de la Copa Intercontinental 1960-2004 de RSSSF (https://www.rsssf.org/tablest/toyota.html). Ningún club argentino ganó el Mundial de Clubes FIFA ni la Copa Intercontinental FIFA 2024-2025 (https://www.rsssf.org/tablesf/fifawcc.html)."
+  },
+  "liga": {
+    "river_plate": 38,
+    "boca_juniors": 36,
+    "racing": 18,
+    "independiente": 16,
+    "san_lorenzo": 15,
+    "velez": 11,
+    "alumni": 10,
+    "estudiantes_lp": 7,
+    "newells": 6,
+    "huracan": 5,
+    "rosario_central": 5,
+    "lomas_athletic": 5
+  },
+  "tier_a": {
+    "independiente": 7,
+    "boca_juniors": 6,
+    "estudiantes_lp": 4,
+    "river_plate": 4,
+    "racing": 1,
+    "argentinos_juniors": 1,
+    "velez": 1,
+    "san_lorenzo": 1
+  },
+  "mundo": {
+    "boca_juniors": 3,
+    "independiente": 2,
+    "racing": 1,
+    "estudiantes_lp": 1,
+    "river_plate": 1,
+    "velez": 1
+  }
+}
