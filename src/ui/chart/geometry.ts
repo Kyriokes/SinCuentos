@@ -10,6 +10,21 @@ export interface ChartLayout {
   ticksY: number[];
 }
 
+/**
+ * Altura final de cada insignia. Las que todavía no tienen puntos no se muestran ni ocupan lugar;
+ * las que se pisan se apilan hacia arriba, sin salirse del borde superior.
+ */
+export function stackBadges(spots: { id: string; points: number; y: number }[], gap: number): Map<string, number> {
+  const placed = new Map<string, number>();
+  let floor = Infinity;
+  for (const spot of spots.filter((s) => s.points > 0).sort((a, b) => b.y - a.y)) {
+    const y = Math.max(gap / 2, Math.min(spot.y, floor - gap));
+    floor = y;
+    placed.set(spot.id, y);
+  }
+  return placed;
+}
+
 export function layoutChart(tl: Timeline, size: { width: number; height: number; pad: number }): ChartLayout {
   const { width, height, pad } = size;
   const first = tl.years[0];

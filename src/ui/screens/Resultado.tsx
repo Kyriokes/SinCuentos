@@ -48,9 +48,18 @@ export function Resultado({ data = REAL }: { data?: ResultadoData }) {
       : encodeShare({ mode: 'n', weights, filters });
 
   // La barra de direcciones siempre lleva el resultado que se está viendo.
+  // Se espera a que el slider se quede quieto: Safari corta la página si se la actualiza
+  // más de cien veces en medio minuto.
   useEffect(() => {
-    window.history.replaceState(null, '', `${window.location.pathname}?${query}`);
     setCopied('no');
+    const timer = window.setTimeout(() => {
+      try {
+        window.history.replaceState(null, '', `${window.location.pathname}?${query}`);
+      } catch {
+        // Sin dirección actualizada el resultado sigue funcionando; compartir usa `query` directamente.
+      }
+    }, 250);
+    return () => window.clearTimeout(timer);
   }, [query]);
 
   useEffect(() => {
@@ -72,11 +81,25 @@ export function Resultado({ data = REAL }: { data?: ResultadoData }) {
       .filter((t) => t.clubId === clubId && t.year >= filters.from && t.year <= filters.to && (filters.includeAmateur || t.era === 'profesional'))
       .sort((a, b) => a.year - b.year);
 
+  const controls = (
+    <div className="controles">
+      <label className="check">
+        <input type="checkbox" checked={filters.includeAmateur} onChange={(e) => setFilters({ includeAmateur: e.target.checked })} />
+        <span>Contar el amateurismo</span>
+      </label>
+      <RangeSlider min={data.bounds.min} max={data.bounds.max} from={filters.from} to={filters.to} onChange={(from, to) => setFilters({ from, to })} />
+    </div>
+  );
+
   if (empty) {
+    const allZero = SCORED_ORDER.every((cat) => weights[cat] === 0);
     return (
       <section className="screen">
-        <h2 className="display pregunta">Con todo en cero no hay ranking</h2>
-        <p className="ayuda">Ningún club suma puntos con estos valores y estos años. Subí algún valor o ampliá el rango.</p>
+        <h2 className="display pregunta">{allZero ? 'Con todo en cero no hay ranking' : 'Nadie suma puntos acá'}</h2>
+        <p className="ayuda">
+          {allZero ? 'Todos los valores están en cero. Subí alguno en la calculadora.' : 'Ningún club ganó un título que cuente en estos años. Ampliá el rango.'}
+        </p>
+        {!allZero && controls}
         <div className="acciones">
           <button type="button" className="btn btn-primary" onClick={() => start('n')}>
             Volver a la calculadora
@@ -106,13 +129,7 @@ export function Resultado({ data = REAL }: { data?: ResultadoData }) {
 
       {!racing && (
         <>
-          <div className="controles">
-            <label className="check">
-              <input type="checkbox" checked={filters.includeAmateur} onChange={(e) => setFilters({ includeAmateur: e.target.checked })} />
-              <span>Contar el amateurismo</span>
-            </label>
-            <RangeSlider min={data.bounds.min} max={data.bounds.max} from={filters.from} to={filters.to} onChange={(from, to) => setFilters({ from, to })} />
-          </div>
+          {controls}
 
           <ol className="tabla">
             {ranking.map((r) => {

@@ -3,7 +3,7 @@ import { resolveTitles } from '../../core/resolve';
 import { computeTimeline } from '../../core/score';
 import type { Filters } from '../../core/types';
 import { DEFAULT_WEIGHTS } from '../../core/weights';
-import { layoutChart } from './geometry';
+import { layoutChart, stackBadges } from './geometry';
 
 const T = resolveTitles(FIXTURE_ROWS, FIXTURE_COMPETITIONS);
 const ALL: Filters = { includeAmateur: true, from: 1920, to: 2015 };
@@ -31,4 +31,28 @@ test('serie vacía no rompe', () => {
   const empty = layoutChart({ years: [2000], series: [] }, SIZE);
   expect(empty.paths).toEqual([]);
   expect(Number.isFinite(empty.yOf(0))).toBe(true);
+});
+
+test('las insignias sin puntos no empujan a las demás', () => {
+  const placed = stackBadges(
+    [
+      { id: 'sin', points: 0, y: 384 },
+      { id: 'otro', points: 0, y: 384 },
+      { id: 'alumni', points: 2, y: 384 },
+    ],
+    26,
+  );
+  expect(placed.get('alumni')).toBe(384);
+  expect(placed.has('sin')).toBe(false);
+});
+test('las insignias que se pisan se apilan hacia arriba', () => {
+  const placed = stackBadges(
+    [
+      { id: 'a', points: 5, y: 100 },
+      { id: 'b', points: 5, y: 100 },
+      { id: 'c', points: 9, y: 40 },
+    ],
+    26,
+  );
+  expect([placed.get('a'), placed.get('b'), placed.get('c')].sort((x, y) => x! - y!)).toEqual([40, 74, 100]);
 });

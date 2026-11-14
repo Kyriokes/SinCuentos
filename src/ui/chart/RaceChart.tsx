@@ -5,7 +5,7 @@ import type { Timeline } from '../../core/score';
 import type { Club } from '../../core/types';
 import { Badge } from '../Badge';
 import { usePrefersReducedMotion } from '../motion';
-import { layoutChart } from './geometry';
+import { layoutChart, stackBadges } from './geometry';
 
 interface Props {
   timeline: Timeline;
@@ -62,17 +62,16 @@ export function RaceChart({ timeline, clubs, highlight, animate, onDone }: Props
     if (yearLabel.current) yearLabel.current.textContent = String(timeline.years[index]);
 
     // Las insignias viajan en la punta de cada línea; si se pisan, se apilan hacia arriba.
-    const spots = leaders
-      .map((s) => ({ id: s.clubId, points: s.cumulative[index], y: layout.yOf(s.cumulative[index]) }))
-      .sort((a, b) => b.y - a.y);
-    let floor = Infinity;
-    for (const spot of spots) {
-      const node = badges.current.get(spot.id);
+    const placed = stackBadges(
+      leaders.map((s) => ({ id: s.clubId, points: s.cumulative[index], y: layout.yOf(s.cumulative[index]) })),
+      BADGE,
+    );
+    for (const s of leaders) {
+      const node = badges.current.get(s.clubId);
       if (!node) continue;
-      const y = Math.min(spot.y, floor - BADGE);
-      floor = y;
-      node.setAttribute('transform', `translate(${x + BADGE / 2 + 3} ${y})`);
-      node.style.opacity = spot.points > 0 ? '1' : '0';
+      const y = placed.get(s.clubId);
+      node.style.opacity = y === undefined ? '0' : '1';
+      if (y !== undefined) node.setAttribute('transform', `translate(${x + BADGE / 2 + 3} ${y})`);
     }
   };
 

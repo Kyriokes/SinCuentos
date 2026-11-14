@@ -97,3 +97,35 @@ test('durante la carrera no se ve el ranking', () => {
   expect(screen.queryAllByTestId('fila')).toHaveLength(0);
   expect(screen.getByRole('button', { name: 'Saltar' })).toBeInTheDocument();
 });
+
+test('un rango sin títulos avisa sin esconder los filtros', () => {
+  setup({ filters: { includeAmateur: true, from: 1921, to: 1949 } });
+  expect(screen.getByText('Nadie suma puntos acá')).toBeInTheDocument();
+  expect(screen.queryByText('Con todo en cero no hay ranking')).toBeNull();
+  fireEvent.change(screen.getByLabelText('Hasta'), { target: { value: '2015' } });
+  expect(rows().length).toBeGreaterThan(0);
+});
+
+test('la dirección se actualiza una sola vez aunque el rango cambie muchas veces', () => {
+  vi.useFakeTimers();
+  try {
+    setup();
+    vi.advanceTimersByTime(1000);
+    const replace = vi.spyOn(window.history, 'replaceState');
+    for (const year of [1930, 1940, 1950, 1960, 2000]) fireEvent.change(screen.getByLabelText('Desde'), { target: { value: String(year) } });
+    expect(replace).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(1000);
+    expect(replace).toHaveBeenCalledTimes(1);
+    expect(String(replace.mock.calls[0][2])).toContain('d=2000-2015');
+    replace.mockRestore();
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+test('con los dos extremos a la derecha, Desde queda arriba para poder moverlo', () => {
+  setup({ filters: { includeAmateur: true, from: 2015, to: 2015 } });
+  expect(Number((screen.getByLabelText('Desde') as HTMLInputElement).style.zIndex)).toBeGreaterThan(
+    Number((screen.getByLabelText('Hasta') as HTMLInputElement).style.zIndex),
+  );
+});

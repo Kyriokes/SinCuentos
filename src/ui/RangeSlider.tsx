@@ -19,8 +19,9 @@ export function RangeSlider({ min, max, from, to, onChange }: Props) {
         <span className="display">{to}</span>
       </div>
       <div className="rango-pista" style={{ ['--left' as string]: `${left}%`, ['--right' as string]: `${right}%` }}>
-        <input type="range" aria-label="Desde" min={min} max={max} step={1} value={from} onChange={(e) => onChange(Math.min(e.target.valueAsNumber, to), to)} />
-        <input type="range" aria-label="Hasta" min={min} max={max} step={1} value={to} onChange={(e) => onChange(from, Math.max(e.target.valueAsNumber, from))} />
+        {/* Cuando los dos extremos se juntan a la derecha, "Desde" tiene que quedar arriba: es el único que puede moverse. */}
+        <input type="range" aria-label="Desde" min={min} max={max} step={1} value={from} style={{ zIndex: from - min > span / 2 ? 3 : 1 }} onChange={(e) => onChange(Math.min(e.target.valueAsNumber, to), to)} />
+        <input type="range" aria-label="Hasta" min={min} max={max} step={1} value={to} style={{ zIndex: 2 }} onChange={(e) => onChange(from, Math.max(e.target.valueAsNumber, from))} />
       </div>
     </div>
   );

@@ -35,6 +35,8 @@ test.each([
   'v=1&m=c&q=102&a=1&d=2000-1990',
   'v=1&m=c&q=102&a=1&d=2000',
   'v=1&m=x&q=102&a=1&d=1891-2025',
+  'v=1&m=c&q=102&a=1&d=1000-1200',
+  'v=1&m=c&q=102&a=1&d=2100-2200',
 ])('inválido: %s', (s) => {
   expect(decodeShare(s, B)).toBeNull();
 });

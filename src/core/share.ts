@@ -36,6 +36,8 @@ function decodeFilters(params: URLSearchParams, bounds: { min: number; max: numb
   const rawFrom = Number(range[1]);
   const rawTo = Number(range[2]);
   if (rawFrom > rawTo) return null;
+  // Un rango entero fuera de los datos no es un resultado: es un link roto.
+  if (rawTo < bounds.min || rawFrom > bounds.max) return null;
   const clamp = (y: number) => Math.min(bounds.max, Math.max(bounds.min, y));
   return { includeAmateur: a === '1', from: clamp(rawFrom), to: clamp(rawTo) };
 }
