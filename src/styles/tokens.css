@@ -1,0 +1,31 @@
+/* Noche de cancha: el campo es la página. Ver docs/design/direccion-visual.md */
+:root {
+  /* Color */
+  --cesped: #14553a;
+  --cesped-claro: #175f41;
+  --cesped-sombra: #0e4630;
+  --cal: #f4f1e4;
+  --cal-suave: rgb(244 241 228 / 0.72);
+  --cal-tenue: rgb(244 241 228 / 0.22);
+  --tinta: #12372a;
+
+  /* Tipografía */
+  --display: 'Big Shoulders Display', 'Arial Narrow', sans-serif;
+  --texto: 'Archivo', system-ui, sans-serif;
+
+  /* Trazo de cal */
+  --trazo: 3px;
+  --radio: 4px;
+
+  /* Franja de corte del césped */
+  --franja: 68px;
+
+  /* Espacio */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+  --s6: 36px;
+  --s7: 56px;
+}
