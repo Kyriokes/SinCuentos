@@ -24,6 +24,6 @@ export function resolveTitles(rows: TitleRow[], competitions: Competition[]): Ti
   return rows.map((row) => {
     const base = categoryOf(row);
     const category = base === 'liga' ? (ligasPerSeason.get(ligaKey(row)) === 1 ? 'liga_anual' : 'liga_corta') : base;
-    return { year: row.year, competitionId: row.competitionId, clubId: row.clubId, era: row.era, category, ...(row.edition ? { edition: row.edition } : {}) };
+    return { year: row.year, competitionId: row.competitionId, clubId: row.clubId, era: row.era, category, source: row.source, ...(row.edition ? { edition: row.edition } : {}) };
   });
 }

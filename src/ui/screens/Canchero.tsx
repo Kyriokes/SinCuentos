@@ -1,0 +1,68 @@
+import { SCORED_ORDER } from '../../core/weights';
+import { useStore } from '../../state/store';
+import { CATEGORY_LABEL, QUESTIONS } from '../labels';
+
+export function Canchero() {
+  const answers = useStore((s) => s.answers);
+  const weights = useStore((s) => s.weights);
+  const answer = useStore((s) => s.answer);
+  const go = useStore((s) => s.go);
+
+  const current = answers.findIndex((a) => a === null);
+  const finished = current === -1;
+  const lastAnswered = finished ? QUESTIONS.length - 1 : current - 1;
+
+  const back = () => {
+    if (lastAnswered < 0) return go('inicio');
+    const next = [...answers];
+    next[lastAnswered] = null;
+    useStore.setState({ answers: next });
+  };
+
+  if (finished) {
+    return (
+      <section className="screen">
+        <p className="paso">Listo</p>
+        <h2 className="display pregunta">Así quedó tu tabla</h2>
+        <ul className="valores">
+          {SCORED_ORDER.map((cat) => (
+            <li key={cat}>
+              <span>{CATEGORY_LABEL[cat]}</span>
+              <b className="display">{weights[cat]}</b>
+            </li>
+          ))}
+        </ul>
+        <div className="acciones">
+          <button type="button" className="btn btn-primary" onClick={() => go('calculo')}>
+            Calcular
+          </button>
+          <button type="button" className="btn-link" onClick={back}>
+            Cambiar la última respuesta
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  const question = QUESTIONS[current];
+  return (
+    <section className="screen">
+      <p className="paso">
+        Pregunta {current + 1} de {QUESTIONS.length}
+      </p>
+      <h2 className="display pregunta">{question.title}</h2>
+      <p className="ayuda">{question.help}</p>
+      <div className="opciones" role="group" aria-label="Opciones" data-count={question.options.length}>
+        {question.options.map((option, value) => (
+          <button type="button" key={option.label} className="opcion" onClick={() => answer(current as 0 | 1 | 2, value)}>
+            <b className="display">{option.big}</b>
+            <span>{option.label}</span>
+          </button>
+        ))}
+      </div>
+      <button type="button" className="btn-link volver" onClick={back}>
+        Volver
+      </button>
+    </section>
+  );
+}

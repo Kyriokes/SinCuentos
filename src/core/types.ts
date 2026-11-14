@@ -37,6 +37,7 @@ export interface Title {
   era: Era;
   category: Category;
   edition?: string;
+  source: string;
 }
 
 export interface Filters {
