@@ -30,3 +30,7 @@ test('amateur y profesional del mismo año no se restan valor', () => {
 test('competencia desconocida lanza error', () => {
   expect(() => resolveTitles([{ ...FIXTURE_ROWS[0], competitionId: 'nope' }], FIXTURE_COMPETITIONS)).toThrow(/nope/);
 });
+test('conserva el nombre de la edición', () => {
+  const rows = [{ ...FIXTURE_ROWS[1], edition: 'Metropolitano' }];
+  expect(resolveTitles(rows, FIXTURE_COMPETITIONS)[0].edition).toBe('Metropolitano');
+});

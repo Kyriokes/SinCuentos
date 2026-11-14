@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sin Cuentos: tres direcciones visuales</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=Archivo:wght@400;600&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800&family=Barlow+Condensed:ital,wght@0,500;0,700;1,800&family=Barlow:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { background: #d9d6d0; color: #1d1d1b; font: 16px/1.5 Archivo, system-ui, sans-serif; padding: 32px 16px 80px; }
+  .intro { max-width: 760px; margin: 0 auto 40px; }
+  .intro h1 { font-size: 28px; line-height: 1.15; margin-bottom: 8px; }
+  .dir { max-width: 800px; margin: 0 auto 64px; }
+  .dir > h2 { font-size: 22px; margin-bottom: 4px; }
+  .dir > p { max-width: 62ch; margin-bottom: 20px; }
+  .phones { display: flex; gap: 24px; flex-wrap: wrap; }
+  .phone { width: 360px; height: 680px; border-radius: 28px; overflow: hidden; position: relative; flex: none; box-shadow: 0 0 0 6px #1d1d1b; }
+  .screen { position: absolute; inset: 0; display: flex; flex-direction: column; }
+  button { font: inherit; color: inherit; cursor: pointer; border: 0; }
+  button:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+  svg { display: block; }
+
+  /* ---------- A: Noche de cancha ---------- */
+  .a .screen { background: #14553a; color: #f4f1e4; font-family: Archivo, sans-serif; }
+  .a .grass { position: absolute; inset: 0; background: repeating-linear-gradient(180deg, #14553a 0 68px, #175f41 68px 136px); }
+  .a .cal { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .a .cal * { fill: none; stroke: #f4f1e4; stroke-width: 3; stroke-linecap: round; opacity: .9; }
+  .a .body { position: relative; padding: 36px 24px 28px; display: flex; flex-direction: column; height: 100%; }
+  .a .paso { font: 600 15px Archivo; opacity: .8; }
+  .a h3 { font: 900 50px/0.92 "Big Shoulders Display"; text-transform: uppercase; letter-spacing: .5px; margin: 14px 0 12px; }
+  .a .ayuda { font-size: 15px; max-width: 28ch; }
+  .a .ops { margin-top: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .a .ops button { background: transparent; border: 3px solid #f4f1e4; border-radius: 4px; padding: 14px 12px 12px; text-align: left; }
+  .a .ops button b { display: block; font: 900 40px/1 "Big Shoulders Display"; }
+  .a .ops button span { font-size: 14px; }
+  .a .ops button.on { background: #f4f1e4; color: #14553a; }
+  .a .anio { font: 900 120px/0.8 "Big Shoulders Display"; letter-spacing: -2px; }
+  .a .sub { font: 600 15px Archivo; margin-top: 10px; }
+
+  /* ---------- B: Figuritas ---------- */
+  .b .screen { background: #7fc4ea; color: #12284a; font-family: "Bricolage Grotesque", sans-serif; }
+  .b .dots { position: absolute; inset: 0; background-image: radial-gradient(#ffffff55 1.6px, transparent 1.7px); background-size: 12px 12px; }
+  .b .body { position: relative; padding: 32px 22px 26px; display: flex; flex-direction: column; height: 100%; }
+  .b .paso { display: inline-block; align-self: flex-start; background: #12284a; color: #fff; font-weight: 700; font-size: 14px; padding: 4px 12px; border-radius: 99px; }
+  .b h3 { font: 800 38px/1.02 "Bricolage Grotesque"; margin: 16px 0 10px; letter-spacing: -1px; }
+  .b .ayuda { font-size: 16px; max-width: 30ch; }
+  .b .ops { margin-top: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .b .ops button { background: #fff; border-radius: 14px; padding: 14px 12px; text-align: center; box-shadow: 0 5px 0 #12284a; transform: rotate(-1.5deg); }
+  .b .ops button:nth-child(even) { transform: rotate(1.2deg); }
+  .b .ops button b { display: block; font: 800 38px/1 "Bricolage Grotesque"; }
+  .b .ops button span { font-size: 14px; font-weight: 700; }
+  .b .ops button.on { background: #f8c21c; }
+  .b .hoja { background: #fff; border-radius: 18px; padding: 14px 8px 8px; margin-top: 14px; box-shadow: 0 6px 0 #12284a; }
+  .b .anio { font: 800 84px/0.9 "Bricolage Grotesque"; letter-spacing: -4px; }
+  .b .sub { font-weight: 700; font-size: 15px; }
+
+  /* ---------- C: Transmisión ---------- */
+  .c .screen { background: #1d2f9c; color: #fff; font-family: Barlow, sans-serif; }
+  .c .scan { position: absolute; inset: 0; background: repeating-linear-gradient(180deg, transparent 0 3px, #0000001f 3px 4px); pointer-events: none; z-index: 3; }
+  .c .body { position: relative; padding: 30px 0 26px; display: flex; flex-direction: column; height: 100%; }
+  .c .paso { align-self: flex-start; background: #ffe14a; color: #1d2f9c; font: italic 800 20px "Barlow Condensed"; padding: 4px 18px 4px 22px; clip-path: polygon(0 0, 100% 0, calc(100% - 12px) 100%, 0 100%); }
+  .c h3 { font: italic 800 46px/0.95 "Barlow Condensed"; text-transform: uppercase; margin: 18px 22px 10px; text-shadow: 3px 3px 0 #0b1560; }
+  .c .ayuda { margin: 0 22px; font-size: 16px; max-width: 28ch; color: #dfe4ff; }
+  .c .ops { margin-top: auto; display: grid; gap: 8px; }
+  .c .ops button { display: flex; align-items: center; gap: 14px; background: #fff; color: #1d2f9c; padding: 8px 22px; text-align: left; margin-right: 40px; clip-path: polygon(0 0, 100% 0, calc(100% - 18px) 100%, 0 100%); }
+  .c .ops button b { font: italic 800 38px/1 "Barlow Condensed"; width: 56px; }
+  .c .ops button span { font: 700 20px "Barlow Condensed"; text-transform: uppercase; }
+  .c .ops button.on { background: #ffe14a; margin-right: 12px; }
+  .c .barra { display: flex; align-items: stretch; margin-top: 4px; }
+  .c .anio { background: #ffe14a; color: #1d2f9c; font: italic 800 72px/0.9 "Barlow Condensed"; padding: 8px 26px 6px 22px; clip-path: polygon(0 0, 100% 0, calc(100% - 20px) 100%, 0 100%); }
+  .c .sub { align-self: center; font: 700 18px "Barlow Condensed"; text-transform: uppercase; margin-left: 4px; }
+  .c .tabla { margin: 10px 22px 0; }
+  .nota { font-size: 13px; opacity: .7; margin-top: 10px; }
+</style>
+</head>
+<body>
+<div class="intro">
+  <h1>Sin Cuentos: tres direcciones visuales</h1>
+  <p>Cada dirección muestra las mismas dos pantallas: una pregunta del camino canchero y la carrera a mitad de camino. Los datos del gráfico son de ejemplo. Elegí una, o decime qué mezclarías.</p>
+</div>
+
+<section class="dir a">
+  <h2>A. Noche de cancha</h2>
+  <p>El campo es la página. Césped con franjas de corte, líneas de cal que se dibujan solas y tipografía de tribuna. Las líneas del gráfico son cal sobre pasto.</p>
+  <div class="phones">
+    <div class="phone"><div class="screen">
+      <div class="grass"></div>
+      <svg class="cal" viewBox="0 0 360 680"><circle cx="180" cy="700" r="150"/><path d="M0 700H360"/><path d="M-10 250 A60 60 0 0 1 50 310"/></svg>
+      <div class="body">
+        <p class="paso">Pregunta 1 de 3</p>
+        <h3>¿Cuántas ligas vale una Sudamericana?</h3>
+        <p class="ayuda">Un Clausura vale 1 punto. La liga anual vale 2.</p>
+        <div class="ops">
+          <button><b>½</b><span>Media liga</span></button>
+          <button><b>1</b><span>Una liga</span></button>
+          <button class="on"><b>2</b><span>Dos ligas</span></button>
+          <button><b>3</b><span>Tres ligas</span></button>
+        </div>
+      </div>
+    </div></div>
+    <div class="phone"><div class="screen">
+      <div class="grass"></div>
+      <div class="body">
+        <div class="anio">1994</div>
+        <p class="sub">Puntos acumulados, año por año</p>
+        <svg class="chart" data-theme="a" viewBox="0 0 320 440" style="margin-top:18px"></svg>
+      </div>
+    </div></div>
+  </div>
+</section>
+
+<section class="dir b">
+  <h2>B. Figuritas</h2>
+  <p>El álbum del Mundial llevado al ranking. Celeste, blanco y amarillo sol; cada club es una figurita con borde blanco y las opciones son figuritas apenas torcidas, como recién pegadas.</p>
+  <div class="phones">
+    <div class="phone"><div class="screen">
+      <div class="dots"></div>
+      <div class="body">
+        <span class="paso">Pregunta 1 de 3</span>
+        <h3>¿Cuántas ligas vale una Sudamericana?</h3>
+        <p class="ayuda">Un Clausura vale 1 punto. La liga anual vale 2.</p>
+        <div class="ops">
+          <button><b>½</b><span>Media liga</span></button>
+          <button><b>1</b><span>Una liga</span></button>
+          <button class="on"><b>2</b><span>Dos ligas</span></button>
+          <button><b>3</b><span>Tres ligas</span></button>
+        </div>
+      </div>
+    </div></div>
+    <div class="phone"><div class="screen">
+      <div class="dots"></div>
+      <div class="body">
+        <div class="anio">1994</div>
+        <p class="sub">Puntos acumulados, año por año</p>
+        <div class="hoja"><svg class="chart" data-theme="b" viewBox="0 0 320 420"></svg></div>
+      </div>
+    </div></div>
+  </div>
+</section>
+
+<section class="dir c">
+  <h2>C. Transmisión</h2>
+  <p>Los gráficos de la tele de los domingos a la noche. Azul de videograph, amarillo, placas en diagonal que entran de costado y la carrera como una placa de estadísticas.</p>
+  <div class="phones">
+    <div class="phone"><div class="screen">
+      <div class="scan"></div>
+      <div class="body">
+        <span class="paso">Pregunta 1 de 3</span>
+        <h3>¿Cuántas ligas vale una Sudamericana?</h3>
+        <p class="ayuda">Un Clausura vale 1 punto. La liga anual vale 2.</p>
+        <div class="ops">
+          <button><b>½</b><span>Media liga</span></button>
+          <button><b>1</b><span>Una liga</span></button>
+          <button class="on"><b>2</b><span>Dos ligas</span></button>
+          <button><b>3</b><span>Tres ligas</span></button>
+        </div>
+      </div>
+    </div></div>
+    <div class="phone"><div class="screen">
+      <div class="scan"></div>
+      <div class="body">
+        <div class="barra"><div class="anio">1994</div><p class="sub">Puntos<br>acumulados</p></div>
+        <div class="tabla"><svg class="chart" data-theme="c" viewBox="0 0 320 460"></svg></div>
+      </div>
+    </div></div>
+  </div>
+</section>
+
+<script>
+// Datos de ejemplo: años en que cada club suma puntos (no son datos reales).
+const CLUBS = [
+  { s: 'RIV', c: ['#ffffff', '#d8232a'], y: [1932,1936,1937,1941,1942,1945,1947,1952,1953,1955,1956,1957,1975,1977,1979,1980,1981,1986,1986,1986,1990,1991,1993,1994] },
+  { s: 'BOC', c: ['#143c8c', '#f6c21c'], y: [1931,1934,1935,1940,1943,1944,1954,1962,1964,1965,1969,1970,1976,1977,1977,1977,1978,1978,1981,1992] },
+  { s: 'IND', c: ['#d8232a', '#ffffff'], y: [1938,1939,1948,1960,1963,1964,1964,1965,1967,1970,1971,1972,1972,1973,1973,1973,1974,1975,1977,1978,1983,1984,1984,1984,1989] },
+  { s: 'RAC', c: ['#7fc4ea', '#ffffff'], y: [1949,1950,1951,1958,1961,1966,1967,1967,1967,1988] },
+  { s: 'SLO', c: ['#143c8c', '#d8232a'], y: [1933,1936,1946,1959,1968,1972,1972,1974] },
+];
+const FROM = 1931, TO = 2025, NOW = 1994;
+const TH = {
+  a: { line: '#f4f1e4', lw: 2.5, grid: '#f4f1e455', text: '#f4f1e4', font: '600 11px Archivo', ring: '#f4f1e4', future: '#f4f1e422' },
+  b: { line: null, lw: 4, grid: '#12284a22', text: '#12284a', font: '700 11px Bricolage Grotesque', ring: '#ffffff', future: '#12284a14' },
+  c: { line: null, lw: 3, grid: '#ffffff33', text: '#ffffff', font: '700 12px Barlow Condensed', ring: '#ffe14a', future: '#ffffff18' },
+};
+const NS = 'http://www.w3.org/2000/svg';
+const el = (tag, attrs, parent) => { const n = document.createElementNS(NS, tag); for (const k in attrs) n.setAttribute(k, attrs[k]); parent.appendChild(n); return n; };
+
+function badge(svg, x, y, club, t, theme) {
+  const g = el('g', { transform: `translate(${x - 14},${y - 16})` }, svg);
+  const shield = 'M2 2H26V18C26 26 19 30 14 32C9 30 2 26 2 18Z';
+  if (theme === 'b') el('path', { d: shield, fill: '#fff', stroke: '#fff', 'stroke-width': 7, 'stroke-linejoin': 'round' }, g);
+  el('path', { d: shield, fill: club.c[0], stroke: theme === 'b' ? '#12284a' : t.ring, 'stroke-width': 2, 'stroke-linejoin': 'round' }, g);
+  el('path', { d: 'M2 11H26V17H2Z', fill: club.c[1] }, g);
+  const label = el('text', { x: 14, y: 27, 'text-anchor': 'middle', fill: club.c[0] === '#ffffff' ? '#1d1d1b' : '#fff', style: 'font:700 7px Archivo' }, g);
+  label.textContent = club.s;
+}
+
+document.querySelectorAll('svg.chart').forEach((svg) => {
+  const theme = svg.dataset.theme, t = TH[theme];
+  const [, , W, H] = svg.getAttribute('viewBox').split(' ').map(Number);
+  const pad = { l: 26, r: 22, t: 24, b: 26 };
+  const max = 26;
+  const X = (y) => pad.l + ((y - FROM) / (TO - FROM)) * (W - pad.l - pad.r);
+  const Y = (p) => H - pad.b - (p / max) * (H - pad.t - pad.b);
+  el('rect', { x: X(NOW), y: pad.t, width: X(TO) - X(NOW), height: H - pad.t - pad.b, fill: t.future }, svg);
+  for (const p of [0, 5, 10, 15, 20, 25]) {
+    el('line', { x1: pad.l, x2: W - pad.r, y1: Y(p), y2: Y(p), stroke: t.grid, 'stroke-width': 1, 'stroke-dasharray': theme === 'a' ? '2 6' : '' }, svg);
+    el('text', { x: pad.l - 6, y: Y(p) + 4, 'text-anchor': 'end', fill: t.text, style: `font:${t.font}` }, svg).textContent = p;
+  }
+  for (const y of [1931, 1950, 1970, 1990, 2010, 2025]) el('text', { x: X(y), y: H - 8, 'text-anchor': 'middle', fill: t.text, style: `font:${t.font}` }, svg).textContent = y;
+  const ends = [];
+  CLUBS.forEach((club) => {
+    let pts = 0, d = `M${X(FROM)} ${Y(0)}`;
+    club.y.filter((y) => y <= NOW).forEach((y) => { d += `H${X(y)}`; pts += 1; d += `V${Y(pts)}`; });
+    d += `H${X(NOW)}`;
+    const stroke = t.line || (club.c[0] === '#ffffff' ? club.c[1] : club.c[0]);
+    if (theme === 'c') el('path', { d, fill: 'none', stroke: '#0b1560', 'stroke-width': t.lw + 3, transform: 'translate(2,2)' }, svg);
+    el('path', { d, fill: 'none', stroke: theme === 'c' && club.s === 'BOC' ? '#ffe14a' : theme === 'c' && club.s === 'SLO' ? '#ff7a7a' : stroke, 'stroke-width': t.lw, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }, svg);
+    ends.push({ club, y: Y(pts) });
+  });
+  el('line', { x1: X(NOW), x2: X(NOW), y1: pad.t - 6, y2: H - pad.b, stroke: t.text, 'stroke-width': 1.5 }, svg);
+  ends.sort((p, q) => p.y - q.y).forEach((e, i, arr) => { if (i && e.y - arr[i - 1].y < 34) e.y = arr[i - 1].y + 34; badge(svg, X(NOW) + 20, e.y, e.club, t, theme); });
+});
+</script>
+</body>
+</html>

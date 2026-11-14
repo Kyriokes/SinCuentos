@@ -24,6 +24,8 @@ export interface TitleRow {
   clubId: string;
   era: Era;
   season?: string;
+  /** Nombre de la edición cuando hace falta distinguirla: Metropolitano, Apertura, etc. */
+  edition?: string;
   source: string;
   note?: string;
 }
@@ -34,6 +36,7 @@ export interface Title {
   clubId: string;
   era: Era;
   category: Category;
+  edition?: string;
 }
 
 export interface Filters {
