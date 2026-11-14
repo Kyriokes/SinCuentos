@@ -100,7 +100,7 @@ Reglas:
 - Casos discutidos (1936, superfinales 2012/13 y 2013/14, título por tabla anual 2025, asociaciones paralelas del amateurismo) se resuelven siguiendo el listado de la AFA y se anotan en `note`.
 - Un archivo `expected-totals.json` guarda, con su fuente, el total oficial de ligas y copas por club. Un test compara esos totales con `titles.json`.
 
-**Escudos:** los escudos reales son marcas registradas. El MVP usa insignias SVG propias: forma de escudo con los colores del club y sus iniciales. (C)
+**Escudos:** los escudos reales son marcas registradas. El MVP usa insignias SVG propias: forma de escudo con el diseño de la camiseta del club y sus iniciales. (C, aprobado por S el 2026-11-14)
 
 ## Experiencia
 
@@ -122,7 +122,7 @@ Requisitos que no dependen de la dirección elegida:
 
 - Todo lo gráfico es SVG: insignias, cancha, gráfico, pelota. Nada de imágenes de mapa de bits.
 - Pensado primero para celular (360 px de ancho), porque el link va a circular por WhatsApp.
-- Con `prefers-reduced-motion`, las animaciones saltan al estado final.
+- Con `prefers-reduced-motion`, el inicio y el cálculo saltan al estado final. La carrera corre siempre, en 10 segundos, porque es el contenido y se puede saltear. (S, 2026-11-14)
 - Las animaciones se pueden saltear con un toque.
 
 ## Arquitectura

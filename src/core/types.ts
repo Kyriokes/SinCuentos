@@ -4,11 +4,15 @@ export type Category = ScoredCategory | VitrinaCategory;
 export type Era = 'amateur' | 'profesional';
 export type Weights = Record<ScoredCategory, number>;
 
+/** Diseño de la camiseta con el que se dibuja la insignia. */
+export type Pattern = 'liso' | 'bastones' | 'aros' | 'banda' | 'franja' | 'mitades' | 'v';
+
 export interface Club {
   id: string;
   name: string;
   shortName: string;
   colors: [string, string];
+  pattern?: Pattern;
 }
 
 export interface Competition {

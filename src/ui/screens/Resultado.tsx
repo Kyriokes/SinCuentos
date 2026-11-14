@@ -19,6 +19,8 @@ export interface ResultadoData {
 
 const REAL: ResultadoData = { clubs: CLUBS, competitions: COMPETITIONS, titles: TITLES, bounds: YEAR_BOUNDS };
 const HIGHLIGHT = 8;
+/** Filas de la tabla en vivo que acompaña a la carrera. */
+const LIVE_ROWS = 5;
 
 export function Resultado({ data = REAL }: { data?: ResultadoData }) {
   const step = useStore((s) => s.step);
@@ -32,6 +34,8 @@ export function Resultado({ data = REAL }: { data?: ResultadoData }) {
   const reset = useStore((s) => s.reset);
 
   const [open, setOpen] = useState<string | null>(null);
+  /** Año por el que va la carrera, como índice de la serie. */
+  const [raceIndex, setRaceIndex] = useState(0);
   const [copied, setCopied] = useState<'no' | 'yes' | 'manual'>('no');
 
   const ranking = useMemo(() => computeRanking(data.titles, weights, filters, data.clubs), [data, weights, filters]);
@@ -125,7 +129,35 @@ export function Resultado({ data = REAL }: { data?: ResultadoData }) {
         </>
       )}
 
-      <RaceChart timeline={timeline} clubs={data.clubs} highlight={HIGHLIGHT} animate={step === 'carrera'} onDone={() => go('resultado')} />
+      <RaceChart
+        timeline={timeline}
+        clubs={data.clubs}
+        highlight={HIGHLIGHT}
+        animate={step === 'carrera'}
+        onDone={() => go('resultado')}
+        onYear={setRaceIndex}
+      />
+
+      {racing && (
+        <ol className="vivo" aria-hidden="true">
+          {timeline.series
+            .map((s) => ({ clubId: s.clubId, points: s.cumulative[Math.min(raceIndex, s.cumulative.length - 1)] }))
+            .filter((s) => s.points > 0)
+            .sort((a, b) => b.points - a.points)
+            .slice(0, LIVE_ROWS)
+            .map((s, i) => {
+              const club = clubById.get(s.clubId);
+              return (
+                <li key={s.clubId} data-testid="vivo">
+                  <span className="display puesto">{i + 1}</span>
+                  {club && <BadgeIcon club={club} size={30} />}
+                  <span className="club">{club?.name ?? s.clubId}</span>
+                  <span className="display puntos">{s.points}</span>
+                </li>
+              );
+            })}
+        </ol>
+      )}
 
       {!racing && (
         <>

@@ -98,6 +98,17 @@ test('durante la carrera no se ve el ranking', () => {
   expect(screen.getByRole('button', { name: 'Saltar' })).toBeInTheDocument();
 });
 
+test('durante la carrera hay una tabla en vivo con quien ya sumó', () => {
+  setup({ step: 'carrera' });
+  const vivo = screen.getAllByTestId('vivo');
+  expect(vivo).toHaveLength(1);
+  expect(vivo[0]).toHaveTextContent('Zeta');
+  expect(vivo[0]).toHaveTextContent('2');
+  fireEvent.click(screen.getByRole('button', { name: 'Saltar' }));
+  expect(screen.queryAllByTestId('vivo')).toHaveLength(0);
+  expect(rows()[0]).toEqual(['beta', '14']);
+});
+
 test('un rango sin títulos avisa sin esconder los filtros', () => {
   setup({ filters: { includeAmateur: true, from: 1921, to: 1949 } });
   expect(screen.getByText('Nadie suma puntos acá')).toBeInTheDocument();

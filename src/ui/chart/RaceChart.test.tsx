@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { fireEvent, render } from '@testing-library/react';
 import { vi } from 'vitest';
 import { FIXTURE_CLUBS, FIXTURE_COMPETITIONS, FIXTURE_ROWS } from '../../core/fixture';
 import { resolveTitles } from '../../core/resolve';
@@ -14,13 +14,18 @@ const timeline = computeTimeline(
   FIXTURE_CLUBS,
 );
 
-test('con movimiento reducido muestra el estado final y avisa enseguida', () => {
+test('la carrera corre aunque el sistema pida menos movimiento, y se puede saltear', () => {
   mockReducedMotion(true);
   const onDone = vi.fn();
-  const { container } = render(<RaceChart timeline={timeline} clubs={FIXTURE_CLUBS} highlight={8} animate onDone={onDone} />);
+  const onYear = vi.fn();
+  const { container, getByRole } = render(<RaceChart timeline={timeline} clubs={FIXTURE_CLUBS} highlight={8} animate onDone={onDone} onYear={onYear} />);
   expect(container.querySelectorAll('path[data-club]')).toHaveLength(3);
   expect(container.querySelectorAll('g[data-badge]')).toHaveLength(3);
+  expect(container.querySelector('[data-year]')).toHaveTextContent('1920');
+  expect(onDone).not.toHaveBeenCalled();
+  fireEvent.click(getByRole('button', { name: 'Saltar' }));
   expect(container.querySelector('[data-year]')).toHaveTextContent('2015');
+  expect(onYear).toHaveBeenLastCalledWith(95);
   expect(onDone).toHaveBeenCalledTimes(1);
 });
 

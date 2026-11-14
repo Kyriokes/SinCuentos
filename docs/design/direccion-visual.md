@@ -31,7 +31,7 @@ El único color fuera de esta paleta es el de las insignias de los clubes. No ha
 - Trazo de cal de 3 px con puntas redondeadas. Radio de 4 px en botones y campos.
 - Los separadores son líneas punteadas, como la cal gastada. La línea llena se reserva para bordes de botones y ejes.
 - Elegido: fondo de cal con texto en tinta. No elegido: borde de cal sobre césped.
-- Las insignias son un escudo con el color principal del club, una banda del secundario y las iniciales.
+- Las insignias son un escudo con el diseño de la camiseta del club (lisa, bastones, aros, banda, franja, mitades o V) y las iniciales sobre una placa de tinta. No son los escudos oficiales.
 
 ## Disposición
 
@@ -47,12 +47,12 @@ Cada animación explica algo. No hay entradas decorativas ni efectos al pasar el
 |---|---|---|
 | Inicio | Las líneas de cal del círculo central se dibujan | 1,1 s, una sola vez |
 | Cálculo | Se dibuja el arco, aparecen los seis valores de menor a mayor, la pelota entra al ángulo y la red se sacude | Menos de 4 s |
-| Carrera | Un cursor recorre los años; cada línea se revela hasta el cursor y la insignia viaja en la punta | 11 s |
+| Carrera | Un cursor recorre los años; cada línea se revela hasta el cursor, la insignia viaja en la punta y una tabla en vivo muestra a los cinco primeros | 10 s |
 | Resultado | Al cambiar un filtro el gráfico y la tabla se actualizan sin repetir la carrera | Inmediato |
 
 Reglas:
 
 - Toda animación se saltea con un toque o con el botón "Saltar".
-- Con movimiento reducido activado, cada pantalla muestra directamente su estado final.
+- Con movimiento reducido activado, el inicio y el cálculo muestran directamente su estado final. La carrera corre igual: es el contenido, la dispara el usuario y se puede saltear. (Pedido de Sergio, 2026-11-14.)
 - Las líneas del gráfico son escaleras: los puntos se ganan de golpe, no de a poco.
 - Solo los ocho primeros llevan línea a pleno e insignia; el resto queda en cal tenue.

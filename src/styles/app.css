@@ -687,3 +687,23 @@
     transform: none;
   }
 }
+
+/* ---------- Tabla en vivo de la carrera ---------- */
+.vivo {
+  margin-top: var(--s3);
+  border-top: var(--trazo) solid var(--cal);
+  min-height: 260px;
+}
+
+.vivo li {
+  display: grid;
+  grid-template-columns: 34px 30px 1fr auto;
+  align-items: center;
+  gap: var(--s3);
+  padding: 8px 0;
+  border-bottom: 2px dashed var(--cal-tenue);
+}
+
+.vivo .puntos {
+  font-size: 32px;
+}
