@@ -45,13 +45,17 @@ export function Canchero() {
   }
 
   const question = QUESTIONS[current];
+  // La clave remonta solo el enunciado: entra de nuevo en cada pregunta y se nota que se avanzó.
+  // Las opciones y "Volver" quedan afuera para no perder el foco del teclado.
   return (
     <section className="screen">
-      <p className="paso">
-        Pregunta {current + 1} de {QUESTIONS.length}
-      </p>
-      <h2 className="display pregunta">{question.title}</h2>
-      <p className="ayuda">{question.help}</p>
+      <div className="entra" key={current}>
+        <p className="paso">
+          Pregunta {current + 1} de {QUESTIONS.length}
+        </p>
+        <h2 className="display pregunta">{question.title}</h2>
+        <p className="ayuda">{question.help}</p>
+      </div>
       <div className="opciones" role="group" aria-label="Opciones" data-count={question.options.length}>
         {question.options.map((option, value) => (
           <button type="button" key={option.label} className="opcion" onClick={() => answer(current as 0 | 1 | 2, value)}>

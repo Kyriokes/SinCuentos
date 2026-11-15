@@ -110,7 +110,9 @@
 
 .btn:active,
 .opcion:active,
-.camino:active {
+.camino:active,
+.check input:active,
+.fila-btn:not([aria-disabled='true']):active .club {
   transform: translateY(2px);
 }
 
@@ -460,6 +462,19 @@
   text-align: center;
 }
 
+/* Cada puesto tiene su columna, aunque falten clubes para completar el podio. */
+.escalon-1 {
+  grid-column: 2;
+}
+
+.escalon-2 {
+  grid-column: 1;
+}
+
+.escalon-3 {
+  grid-column: 3;
+}
+
 .escalon-nombre {
   font-weight: 600;
   font-size: 14px;
@@ -531,17 +546,28 @@
   cursor: pointer;
 }
 
+.check input {
+  transition: background-color 0.12s ease-out;
+}
+
 .check input:checked {
   background: var(--cal);
 }
 
-.check input:checked::after {
+/* El tilde se dibuja como un trazo, de izquierda a derecha. */
+.check input::after {
   content: '';
   width: 12px;
   height: 7px;
   border-left: 3px solid var(--tinta);
   border-bottom: 3px solid var(--tinta);
   transform: translateY(-2px) rotate(-45deg);
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 0.15s ease-out;
+}
+
+.check input:checked::after {
+  clip-path: inset(0);
 }
 
 .rango-valores {
@@ -553,6 +579,15 @@
 .rango-valores .display {
   font-size: 34px;
   font-variant-numeric: tabular-nums;
+  padding: 2px 6px 0;
+  margin: 0 -6px;
+  border-radius: var(--radio);
+}
+
+/* El año del extremo que se está moviendo se invierte. */
+.rango-valores .display.activo {
+  background: var(--cal);
+  color: var(--tinta);
 }
 
 .rango-pista {
@@ -602,16 +637,42 @@
   background: var(--cal);
   border: 3px solid var(--tinta);
   cursor: grab;
+  transition: transform 0.12s ease-out;
 }
 
 .rango-pista input::-moz-range-thumb {
+  box-sizing: border-box;
   pointer-events: auto;
-  width: 22px;
-  height: 22px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: var(--cal);
   border: 3px solid var(--tinta);
   cursor: grab;
+  transition: transform 0.12s ease-out;
+}
+
+.rango-pista input:active::-webkit-slider-thumb {
+  transform: scale(1.2);
+  cursor: grabbing;
+}
+
+.rango-pista input:active::-moz-range-thumb {
+  transform: scale(1.2);
+  cursor: grabbing;
+}
+
+/* Los dos inputs ocupan toda la pista: el foco se marca en el extremo, no en la pista entera. */
+.rango-pista input:focus-visible {
+  outline: none;
+}
+
+.rango-pista input:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px var(--cal);
+}
+
+.rango-pista input:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 3px var(--cal);
 }
 
 .rango-pista input::-moz-range-track {
@@ -727,10 +788,109 @@
   }
 }
 
+/* ---------- Movimiento que explica ---------- */
+/* Pregunta nueva: el enunciado entra desde la derecha. Las opciones no se animan, para que el pulgar no espere. */
+.entra {
+  display: contents;
+}
+
+.entra > .paso,
+.entra > .pregunta,
+.entra > .ayuda {
+  animation: entrar 0.22s ease-out both;
+}
+
+@keyframes entrar {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+}
+
+/* El detalle de un club se despliega hacia abajo. */
+.desglose {
+  animation: desplegar 0.18s ease-out both;
+}
+
+@keyframes desplegar {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+/* Puntos recién ganados en la tabla en vivo. */
+.golpe {
+  display: inline-block;
+  padding: 0 4px;
+  margin: 0 -4px;
+  border-radius: var(--radio);
+  animation: golpe 0.3s ease-out;
+}
+
+@keyframes golpe {
+  from {
+    background: var(--cal);
+    color: var(--tinta);
+  }
+}
+
+.aviso:not(:empty) {
+  animation: desplegar 0.18s ease-out both;
+}
+
+.race.corriendo {
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .btn-primary:hover {
+    background: var(--cesped);
+    color: var(--cal);
+  }
+
+}
+
 /* ---------- Movimiento reducido ---------- */
 @media (prefers-reduced-motion: reduce) {
   .cal-lines .cal {
     animation: none;
+  }
+
+  .entra > .paso,
+  .entra > .pregunta,
+  .entra > .ayuda,
+  .desglose,
+  .golpe,
+  .aviso:not(:empty) {
+    animation: none;
+  }
+
+  .check input,
+  .check input::after {
+    transition: none;
+  }
+
+  /* Cada motor en su regla: un pseudo-elemento que el navegador no conoce invalida la lista entera. */
+  .rango-pista input::-webkit-slider-thumb {
+    transition: none;
+  }
+
+  .rango-pista input::-moz-range-thumb {
+    transition: none;
+  }
+
+  .check input:active,
+  .fila-btn:active .club {
+    transform: none;
+  }
+
+  .rango-pista input:active::-webkit-slider-thumb {
+    transform: none;
+  }
+
+  .rango-pista input:active::-moz-range-thumb {
+    transform: none;
   }
 
   .btn:active,

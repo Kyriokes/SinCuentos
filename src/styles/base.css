@@ -40,6 +40,13 @@ input {
   color: inherit;
 }
 
+button,
+input,
+a {
+  /* El gris del toque en el celular taparía la inversión de color, que es la respuesta propia del sistema. */
+  -webkit-tap-highlight-color: transparent;
+}
+
 button {
   cursor: pointer;
   background: none;

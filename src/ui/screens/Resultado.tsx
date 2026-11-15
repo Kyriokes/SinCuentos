@@ -1,3 +1,5 @@
+import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { computeRanking, computeTimeline, type ClubResult } from '../../core/score';
 import { encodeShare, MAX_SELECTED } from '../../core/share';
@@ -10,6 +12,7 @@ import { Cafecito } from '../Cafecito';
 import { assignLineColors } from '../chart/colors';
 import { RaceChart } from '../chart/RaceChart';
 import { CATEGORY_LABEL } from '../labels';
+import { useSlideRows } from '../motion';
 import { RangeSlider } from '../RangeSlider';
 
 export interface ResultadoData {
@@ -41,6 +44,13 @@ export function Resultado({ data = REAL }: { data?: ResultadoData }) {
   /** Año por el que va la carrera, como índice de la serie. */
   const [raceIndex, setRaceIndex] = useState(0);
   const [copied, setCopied] = useState<'no' | 'yes' | 'manual'>('no');
+  /** El podio se levanta solo cuando viene de terminar la carrera, no al mover filtros. */
+  const [reveal, setReveal] = useState(false);
+
+  const liveRef = useRef<HTMLOListElement>(null);
+  const tableRef = useRef<HTMLOListElement>(null);
+  useSlideRows(liveRef);
+  useSlideRows(tableRef);
 
   const ranking = useMemo(() => computeRanking(data.titles, weights, filters, data.clubs), [data, weights, filters]);
   const timeline = useMemo(() => computeTimeline(data.titles, weights, filters, data.clubs), [data, weights, filters]);
@@ -143,6 +153,11 @@ export function Resultado({ data = REAL }: { data?: ResultadoData }) {
     if (step === 'carrera' && empty) go('resultado');
   }, [step, empty, go]);
 
+  // Si el rango queda vacío el podio se desmonta; al volver no tiene que levantarse otra vez.
+  useEffect(() => {
+    if (empty) setReveal(false);
+  }, [empty]);
+
   const share = () => {
     const url = `${window.location.origin}${window.location.pathname}?${query}`;
     const clipboard = navigator.clipboard;
@@ -187,7 +202,7 @@ export function Resultado({ data = REAL }: { data?: ResultadoData }) {
               {filters.includeAmateur ? '' : ', sin amateurismo'}
             </p>
             <h2 className="display pregunta">Tu ranking</h2>
-            <Podio ranking={ranking} clubById={clubById} />
+            <Podio ranking={ranking} clubById={clubById} reveal={reveal} />
           </>
         )
       )}
@@ -200,14 +215,17 @@ export function Resultado({ data = REAL }: { data?: ResultadoData }) {
           highlight={shown}
           rescale={selected !== null && !fallback}
           animate={step === 'carrera'}
-          onDone={() => go('resultado')}
+          onDone={() => {
+            setReveal(true);
+            go('resultado');
+          }}
           onYear={setRaceIndex}
           colors={lineColors}
         />
       )}
 
       {racing && (
-        <ol className="vivo" aria-hidden="true">
+        <ol className="vivo" aria-hidden="true" ref={liveRef}>
           {timeline.series
             .map((s) => ({ clubId: s.clubId, points: s.cumulative[Math.min(raceIndex, s.cumulative.length - 1)] }))
             .filter((s) => s.points > 0 && (!selected || fallback || lit.includes(s.clubId)))
@@ -216,14 +234,16 @@ export function Resultado({ data = REAL }: { data?: ResultadoData }) {
             .map((s, i) => {
               const club = clubById.get(s.clubId);
               return (
-                <li key={s.clubId} data-testid="vivo">
+                <li key={s.clubId} data-testid="vivo" data-club={s.clubId}>
                   <span className="display puesto">{i + 1}</span>
                   {club && <BadgeIcon club={club} size={30} />}
                   <span className="club">
                     {club?.name ?? s.clubId}
                     {lineColors.has(s.clubId) && <i className="muestra" style={{ background: lineColors.get(s.clubId) }} />}
                   </span>
-                  <span className="display puntos">{s.points}</span>
+                  <span className="display puntos">
+                    <Golpe value={s.points} />
+                  </span>
                 </li>
               );
             })}
@@ -277,7 +297,7 @@ export function Resultado({ data = REAL }: { data?: ResultadoData }) {
               </div>
             </div>
           )}
-          <ol className={comparing ? 'tabla comparando' : 'tabla'} hidden={empty}>
+          <ol className={comparing ? 'tabla comparando' : 'tabla'} hidden={empty} ref={tableRef}>
             {ranking.map((r) => {
               const club = clubById.get(r.clubId);
               const isOpen = !comparing && open === r.clubId;
@@ -351,11 +371,48 @@ export function Resultado({ data = REAL }: { data?: ResultadoData }) {
   );
 }
 
-function Podio({ ranking, clubById }: { ranking: ClubResult[]; clubById: Map<string, Club> }) {
+/** El número da un golpe invertido cada vez que cambia: los puntos se ganan de golpe, no se cuentan de a uno. */
+function Golpe({ value }: { value: number }) {
+  const last = useRef(value);
+  const hits = useRef(0);
+  if (last.current !== value) {
+    last.current = value;
+    hits.current += 1;
+  }
+  return (
+    <b key={hits.current} className={hits.current ? 'golpe' : undefined}>
+      {value}
+    </b>
+  );
+}
+
+function Podio({ ranking, clubById, reveal }: { ranking: ClubResult[]; clubById: Map<string, Club>; reveal: boolean }) {
   // Orden visual de podio: segundo, primero, tercero.
   const order = [ranking[1], ranking[0], ranking[2]].filter(Boolean);
+  const root = useRef<HTMLDivElement>(null);
+
+  // Al terminar la carrera los escalones se levantan del tercero al primero y recién después se apoyan las insignias.
+  useGSAP(
+    () => {
+      if (!reveal || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      const steps = [3, 2, 1].flatMap((rank) => gsap.utils.toArray<HTMLElement>(`.escalon-${rank}`, root.current));
+      gsap
+        .timeline()
+        .from(
+          steps.map((step) => step.querySelector('.escalon-base')),
+          { scaleY: 0, transformOrigin: '50% 100%', duration: 0.35, ease: 'power2.out', stagger: 0.12, clearProps: 'transform' },
+        )
+        .from(
+          steps.flatMap((step) => [...step.children].filter((el) => !el.classList.contains('escalon-base'))),
+          { y: -8, opacity: 0, duration: 0.2, ease: 'power2.out', stagger: 0.03, clearProps: 'transform,opacity' },
+          '-=0.15',
+        );
+    },
+    { scope: root },
+  );
+
   return (
-    <div className="podio" aria-hidden="true">
+    <div className="podio" aria-hidden="true" ref={root}>
       {order.map((r) => {
         const club = clubById.get(r.clubId);
         return (

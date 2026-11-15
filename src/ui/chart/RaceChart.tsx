@@ -127,7 +127,7 @@ export function RaceChart({ timeline, clubs, highlight, rescale, animate, onDone
   const skip = () => tween.current?.progress(1);
 
   return (
-    <div className="race" ref={wrap} onClick={playing ? skip : undefined}>
+    <div className={playing ? 'race corriendo' : 'race'} ref={wrap} onClick={playing ? skip : undefined}>
       {animate && (
         <div className="race-head">
           <div className="race-year" data-year ref={yearLabel}>

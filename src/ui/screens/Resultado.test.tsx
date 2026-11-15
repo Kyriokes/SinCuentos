@@ -6,6 +6,7 @@ import { resolveTitles } from '../../core/resolve';
 import { decodeShare } from '../../core/share';
 import { DEFAULT_WEIGHTS } from '../../core/weights';
 import { useStore } from '../../state/store';
+import { mockReducedMotion } from '../../test-setup';
 import { Resultado, type ResultadoData } from './Resultado';
 
 const DATA: ResultadoData = {
@@ -355,4 +356,28 @@ describe('elegir clubes para comparar', () => {
     await userEvent.click(row('zeta'));
     expect(useStore.getState().selected).not.toContain('zeta');
   });
+});
+
+test('el año del extremo que se está moviendo queda marcado', () => {
+  setup();
+  const years = () => [...document.querySelectorAll('.rango-valores .display')].map((el) => el.className.includes('activo'));
+  expect(years()).toEqual([false, false]);
+  fireEvent.pointerDown(screen.getByLabelText('Hasta'));
+  expect(years()).toEqual([false, true]);
+  fireEvent.pointerUp(screen.getByLabelText('Hasta'));
+  fireEvent.focus(screen.getByLabelText('Desde'));
+  expect(years()).toEqual([true, false]);
+  fireEvent.blur(screen.getByLabelText('Desde'));
+  expect(years()).toEqual([false, false]);
+});
+
+test('al terminar la carrera el podio y la tabla quedan completos, con o sin movimiento reducido', () => {
+  for (const reduced of [false, true]) {
+    mockReducedMotion(reduced);
+    const { container, unmount } = setup({ step: 'carrera' });
+    fireEvent.click(screen.getByRole('button', { name: 'Saltar' }));
+    expect([...container.querySelectorAll('.escalon-base b')].map((b) => b.textContent)).toEqual(['8', '14', '1']);
+    expect(rows()).toHaveLength(3);
+    unmount();
+  }
 });

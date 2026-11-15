@@ -48,7 +48,11 @@ Cada animación explica algo. No hay entradas decorativas ni efectos al pasar el
 | Inicio | Las líneas de cal del círculo central se dibujan | 1,1 s, una sola vez |
 | Cálculo | Se dibuja el arco, aparecen los seis valores de menor a mayor, la pelota entra al ángulo y la red se sacude | Menos de 4 s |
 | Carrera | Un cursor recorre los años; cada línea se revela hasta el cursor, la insignia viaja en la punta y una tabla en vivo muestra a los cinco primeros | 10 s |
-| Resultado | Al cambiar un filtro el gráfico y la tabla se actualizan sin repetir la carrera | Inmediato |
+| Carrera | En la tabla en vivo, la fila que pasa a otra se desliza a su puesto y el número da un golpe invertido al sumar | 0,25 s y 0,3 s |
+| Fin de la carrera | Los escalones del podio se levantan del tercero al primero y después se apoyan las insignias | Menos de 1 s, una sola vez |
+| Resultado | Al cambiar un filtro el gráfico y la tabla se actualizan sin repetir la carrera; si cambia el orden, las filas se deslizan a su puesto nuevo | Inmediato; 0,25 s el deslizamiento |
+| Controles | El extremo del slider que se mueve se agranda y su año se invierte; el tilde del amateurismo se dibuja; el detalle de un club se despliega | Menos de 0,2 s |
+| Canchero | El enunciado de cada pregunta entra desde la derecha; las opciones no se animan | 0,22 s |
 
 Reglas:
 
