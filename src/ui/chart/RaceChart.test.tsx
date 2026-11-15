@@ -14,11 +14,13 @@ const timeline = computeTimeline(
   FIXTURE_CLUBS,
 );
 
+const all = timeline.series.map((s) => s.clubId);
+
 test('la carrera corre aunque el sistema pida menos movimiento, y se puede saltear', () => {
   mockReducedMotion(true);
   const onDone = vi.fn();
   const onYear = vi.fn();
-  const { container, getByRole } = render(<RaceChart timeline={timeline} clubs={FIXTURE_CLUBS} highlight={8} animate onDone={onDone} onYear={onYear} />);
+  const { container, getByRole } = render(<RaceChart timeline={timeline} clubs={FIXTURE_CLUBS} highlight={all} animate onDone={onDone} onYear={onYear} />);
   expect(container.querySelectorAll('path[data-club]')).toHaveLength(3);
   expect(container.querySelectorAll('g[data-badge]')).toHaveLength(3);
   expect(container.querySelector('[data-year]')).toHaveTextContent('1920');
@@ -31,13 +33,23 @@ test('la carrera corre aunque el sistema pida menos movimiento, y se puede salte
 
 test('sin animación no avisa y no muestra el contador de año', () => {
   const onDone = vi.fn();
-  const { container } = render(<RaceChart timeline={timeline} clubs={FIXTURE_CLUBS} highlight={8} animate={false} onDone={onDone} />);
+  const { container } = render(<RaceChart timeline={timeline} clubs={FIXTURE_CLUBS} highlight={all} animate={false} onDone={onDone} />);
   expect(container.querySelectorAll('path[data-club]')).toHaveLength(3);
   expect(container.querySelector('[data-year]')).toBeNull();
   expect(onDone).not.toHaveBeenCalled();
 });
 
 test('solo los destacados llevan insignia', () => {
-  const { container } = render(<RaceChart timeline={timeline} clubs={FIXTURE_CLUBS} highlight={2} animate={false} onDone={() => {}} />);
+  const { container } = render(<RaceChart timeline={timeline} clubs={FIXTURE_CLUBS} highlight={all.slice(0, 2)} animate={false} onDone={() => {}} />);
   expect(container.querySelectorAll('g[data-badge]')).toHaveLength(2);
+});
+
+test('un elegido fuera de los primeros va a pleno, con insignia y pintado encima de los tenues', () => {
+  const last = all[all.length - 1];
+  const { container } = render(<RaceChart timeline={timeline} clubs={FIXTURE_CLUBS} highlight={[last]} rescale animate={false} onDone={() => {}} />);
+  expect([...container.querySelectorAll('g[data-badge]')].map((g) => g.getAttribute('data-badge'))).toEqual([last]);
+  const paths = [...container.querySelectorAll('path[data-club]')];
+  expect(paths[paths.length - 1].getAttribute('data-club')).toBe(last);
+  expect(paths[paths.length - 1]).not.toHaveClass('race-line-dim');
+  expect(container.querySelector(`g[data-badge="${last}"]`)?.getAttribute('transform')).toMatch(/^translate\(/);
 });

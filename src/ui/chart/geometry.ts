@@ -25,15 +25,19 @@ export function stackBadges(spots: { id: string; points: number; y: number }[], 
   return placed;
 }
 
-export function layoutChart(tl: Timeline, size: { width: number; height: number; pad: number }): ChartLayout {
+/** Con `scaleTo`, la escala vertical se ajusta a esos clubes: comparar dos chicos no los deja pegados al piso. */
+export function layoutChart(tl: Timeline, size: { width: number; height: number; pad: number }, scaleTo?: string[]): ChartLayout {
   const { width, height, pad } = size;
   const first = tl.years[0];
   const last = tl.years[tl.years.length - 1];
-  const max = Math.max(1, ...tl.series.map((s) => s.cumulative[s.cumulative.length - 1] ?? 0));
+  const chosen = tl.series.filter((s) => scaleTo?.includes(s.clubId));
+  const max = Math.max(1, ...(chosen.length ? chosen : tl.series).map((s) => s.cumulative[s.cumulative.length - 1] ?? 0));
 
   const x = scaleLinear().domain([first, last]).range([pad, width - pad]);
   const y = scaleLinear().domain([0, max]).range([height - pad, pad]);
-  const xOf = (year: number) => (first === last ? pad : x(year));
+  // Un solo año no tiene recorrido: ocupa todo el ancho y cada club es una raya horizontal a la altura de sus puntos.
+  const single = first === last;
+  const xOf = (year: number) => (single ? width - pad : x(year));
   const yOf = (points: number) => y(points);
 
   // Los puntos se ganan de golpe: la línea es una escalera, no una pendiente.
@@ -44,7 +48,7 @@ export function layoutChart(tl: Timeline, size: { width: number; height: number;
 
   const paths = tl.series.map((s) => ({
     clubId: s.clubId,
-    d: draw(s.cumulative) ?? '',
+    d: single ? `M${pad},${yOf(s.cumulative[0] ?? 0)}H${width - pad}` : (draw(s.cumulative) ?? ''),
     end: { x: xOf(last), y: yOf(s.cumulative[s.cumulative.length - 1] ?? 0) },
   }));
 

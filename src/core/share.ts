@@ -1,9 +1,13 @@
 import type { CancheroAnswers, Filters, Weights } from './types';
 import { MULTIPLIERS, Q1_VALUES, SCORED_ORDER } from './weights';
 
+/** `selected` son los códigos cortos de los clubes elegidos para comparar; sin eso, van los primeros del ranking. */
 export type ShareState =
-  | { mode: 'c'; answers: CancheroAnswers; filters: Filters }
-  | { mode: 'n'; weights: Weights; filters: Filters };
+  | { mode: 'c'; answers: CancheroAnswers; filters: Filters; selected?: string[] }
+  | { mode: 'n'; weights: Weights; filters: Filters; selected?: string[] };
+
+/** Más líneas que estas no se distinguen entre sí. */
+export const MAX_SELECTED = 8;
 
 const VERSION = '1';
 
@@ -11,7 +15,9 @@ const VERSION = '1';
 export function encodeShare(state: ShareState): string {
   const values = state.mode === 'c' ? `q=${state.answers.join('')}` : `w=${SCORED_ORDER.map((c) => state.weights[c]).join('.')}`;
   const { includeAmateur, from, to } = state.filters;
-  return `v=${VERSION}&m=${state.mode}&${values}&a=${includeAmateur ? 1 : 0}&d=${from}-${to}`;
+  // Parámetro opcional: los links anteriores a la comparación siguen valiendo sin cambiar de versión.
+  const chosen = state.selected?.length ? `&e=${state.selected.slice(0, MAX_SELECTED).join('.')}` : '';
+  return `v=${VERSION}&m=${state.mode}&${values}&a=${includeAmateur ? 1 : 0}&d=${from}-${to}${chosen}`;
 }
 
 function decodeAnswers(q: string | null): CancheroAnswers | null {
@@ -42,6 +48,13 @@ function decodeFilters(params: URLSearchParams, bounds: { min: number; max: numb
   return { includeAmateur: a === '1', from: clamp(rawFrom), to: clamp(rawTo) };
 }
 
+/** Una selección mal escrita no rompe el link: se ignora lo que no sirve. */
+function decodeSelected(e: string | null): string[] | undefined {
+  if (!e) return undefined;
+  const codes = [...new Set(e.split('.').filter((code) => /^[A-Z0-9]{2,5}$/.test(code)))].slice(0, MAX_SELECTED);
+  return codes.length ? codes : undefined;
+}
+
 /** Devuelve null ante cualquier link incompleto o inválido. */
 export function decodeShare(search: string, bounds: { min: number; max: number }): ShareState | null {
   const params = new URLSearchParams(search);
@@ -49,14 +62,16 @@ export function decodeShare(search: string, bounds: { min: number; max: number }
   const filters = decodeFilters(params, bounds);
   if (!filters) return null;
 
+  const selected = decodeSelected(params.get('e'));
+
   const mode = params.get('m');
   if (mode === 'c') {
     const answers = decodeAnswers(params.get('q'));
-    return answers ? { mode, answers, filters } : null;
+    return answers ? { mode, answers, filters, ...(selected && { selected }) } : null;
   }
   if (mode === 'n') {
     const weights = decodeWeights(params.get('w'));
-    return weights ? { mode, weights, filters } : null;
+    return weights ? { mode, weights, filters, ...(selected && { selected }) } : null;
   }
   return null;
 }

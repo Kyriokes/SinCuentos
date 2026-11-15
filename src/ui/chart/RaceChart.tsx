@@ -9,8 +9,10 @@ import { layoutChart, stackBadges } from './geometry';
 interface Props {
   timeline: Timeline;
   clubs: Club[];
-  /** Cuántos clubes van a pleno color y con insignia. */
-  highlight: number;
+  /** Clubes que van a pleno color y con insignia. */
+  highlight: string[];
+  /** Ajusta la escala vertical a los destacados (cuando los eligió el usuario). */
+  rescale?: boolean;
   /** Si es false, dibuja el estado final sin animar ni avisar. */
   animate: boolean;
   onDone(): void;
@@ -31,7 +33,7 @@ export const RACE_SECONDS = 10;
  * La carrera es el contenido, no un adorno: la dispara el usuario, se puede saltear y por eso
  * corre también cuando el sistema pide menos movimiento.
  */
-export function RaceChart({ timeline, clubs, highlight, animate, onDone, onYear, colors }: Props) {
+export function RaceChart({ timeline, clubs, highlight, rescale, animate, onDone, onYear, colors }: Props) {
   const lastIndex = timeline.years.length - 1;
   const playing = animate && lastIndex > 0;
   const wrap = useRef<HTMLDivElement>(null);
@@ -58,9 +60,14 @@ export function RaceChart({ timeline, clubs, highlight, animate, onDone, onYear,
   }, []);
 
   const plot = width - BADGE_ROOM;
-  const layout = useMemo(() => layoutChart(timeline, { width: plot, height: HEIGHT, pad: PAD }), [timeline, plot]);
+  const litKey = highlight.join(',');
+  const layout = useMemo(
+    () => layoutChart(timeline, { width: plot, height: HEIGHT, pad: PAD }, rescale ? litKey.split(',') : undefined),
+    [timeline, plot, rescale, litKey],
+  );
+  const lit = useMemo(() => new Set(litKey.split(',')), [litKey]);
   const clubById = useMemo(() => new Map(clubs.map((c) => [c.id, c])), [clubs]);
-  const leaders = timeline.series.slice(0, highlight);
+  const leaders = timeline.series.filter((s) => lit.has(s.clubId));
 
   /** Pone el gráfico en el año de índice `position` (puede ser fraccionario). */
   const renderAt = (position: number) => {
@@ -109,7 +116,7 @@ export function RaceChart({ timeline, clubs, highlight, animate, onDone, onYear,
         onComplete: () => done.current(),
       });
     },
-    { dependencies: [layout, playing, highlight], scope: wrap },
+    { dependencies: [layout, playing, litKey], scope: wrap },
   );
 
   // Con un solo año no hay nada que recorrer: el final es inmediato.
@@ -136,7 +143,8 @@ export function RaceChart({ timeline, clubs, highlight, animate, onDone, onYear,
       <svg viewBox={`0 0 ${width} ${HEIGHT}`} role="img" aria-label="Puntos acumulados por club, año por año">
         <defs>
           <clipPath id="race-clip">
-            <rect ref={clip} x={0} y={0} width={plot} height={HEIGHT} />
+            {/* Arranca apenas arriba del tope: con la escala ajustada a los elegidos, las líneas tenues de los más grandes se cortan ahí. */}
+            <rect ref={clip} x={0} y={PAD - 4} width={plot} height={HEIGHT - PAD + 4} />
           </clipPath>
         </defs>
         {layout.ticksY.map((t) => (
@@ -153,19 +161,22 @@ export function RaceChart({ timeline, clubs, highlight, animate, onDone, onYear,
           </text>
         ))}
         <g clipPath="url(#race-clip)">
-          {[...layout.paths].reverse().map((p) => {
-            const rank = timeline.series.findIndex((s) => s.clubId === p.clubId);
-            const lit = rank < highlight;
-            return (
-              <path
-                key={p.clubId}
-                data-club={p.clubId}
-                className={lit ? 'race-line' : 'race-line race-line-dim'}
-                style={lit && colors?.has(p.clubId) ? { stroke: colors.get(p.clubId) } : undefined}
-                d={p.d}
-              />
-            );
-          })}
+          {/* Las tenues van al fondo y las destacadas encima, con el primero del ranking arriba de todo. */}
+          {[...layout.paths]
+            .reverse()
+            .sort((a, b) => Number(lit.has(a.clubId)) - Number(lit.has(b.clubId)))
+            .map((p) => {
+              const on = lit.has(p.clubId);
+              return (
+                <path
+                  key={p.clubId}
+                  data-club={p.clubId}
+                  className={on ? 'race-line' : 'race-line race-line-dim'}
+                  style={on && colors?.has(p.clubId) ? { stroke: colors.get(p.clubId) } : undefined}
+                  d={p.d}
+                />
+              );
+            })}
         </g>
         <line ref={cursor} className="race-cursor" x1={plot - PAD} x2={plot - PAD} y1={PAD - 8} y2={HEIGHT - PAD} />
         {leaders.map((s) => {

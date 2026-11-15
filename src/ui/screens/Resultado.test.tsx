@@ -179,3 +179,180 @@ test('con los dos extremos a la derecha, Desde queda arriba para poder moverlo',
     Number((screen.getByLabelText('Hasta') as HTMLInputElement).style.zIndex),
   );
 });
+
+describe('amateurismo: ida y vuelta año a año', () => {
+  const check = () => screen.getByLabelText('Contar el amateurismo');
+  const range = () => {
+    const { from, to } = useStore.getState().filters;
+    return [from, to];
+  };
+
+  // Fixture: datos de 1920 a 2015; el profesionalismo arranca en 1950.
+  test.each(
+    Array.from({ length: 2015 - 1920 + 1 }, (_, i) => 1920 + i).flatMap((from) => [
+      [from, 2015],
+      [from, from],
+      [from, Math.min(2015, from + 7)],
+    ]),
+  )('destildar y volver a tildar deja el rango %i a %i como estaba', async (from, to) => {
+    setup({ filters: { includeAmateur: true, from, to } });
+    await userEvent.click(check());
+    expect(range()).toEqual([Math.max(from, 1950), to < 1950 ? 2015 : to]);
+    await userEvent.click(check());
+    expect(range()).toEqual([from, to]);
+  });
+
+  test('si se movió el slider sin amateurismo, al tildar se respeta lo movido', async () => {
+    setup({ filters: { includeAmateur: true, from: 1930, to: 1940 } });
+    await userEvent.click(check());
+    fireEvent.change(screen.getByLabelText('Desde'), { target: { value: '1950' } });
+    fireEvent.change(screen.getByLabelText('Hasta'), { target: { value: '1980' } });
+    fireEvent.change(screen.getByLabelText('Desde'), { target: { value: '1960' } });
+    await userEvent.click(check());
+    expect(range()).toEqual([1960, 1980]);
+  });
+
+  test('un link sin amateurismo que arranca en el piso se estira al tildar', async () => {
+    setup({ filters: { includeAmateur: false, from: 1950, to: 2015 } });
+    await userEvent.click(check());
+    expect(range()).toEqual([1920, 2015]);
+  });
+});
+
+test('el extremo arrastrado sigue al dedo y empuja al otro', () => {
+  setup({ filters: { includeAmateur: true, from: 1970, to: 1970 } });
+  fireEvent.change(screen.getByLabelText('Hasta'), { target: { value: '1960' } });
+  expect(useStore.getState().filters).toMatchObject({ from: 1960, to: 1960 });
+  fireEvent.change(screen.getByLabelText('Hasta'), { target: { value: '1955' } });
+  expect(useStore.getState().filters).toMatchObject({ from: 1955, to: 1955 });
+  fireEvent.change(screen.getByLabelText('Hasta'), { target: { value: '1980' } });
+  expect(useStore.getState().filters).toMatchObject({ from: 1955, to: 1980 });
+  fireEvent.change(screen.getByLabelText('Desde'), { target: { value: '1990' } });
+  expect(useStore.getState().filters).toMatchObject({ from: 1990, to: 1990 });
+});
+
+test('si el rango queda vacío el slider sigue siendo el mismo: no se corta el arrastre', () => {
+  setup({ filters: { includeAmateur: true, from: 1920, to: 1949 } });
+  const hasta = screen.getByLabelText('Hasta');
+  fireEvent.change(screen.getByLabelText('Desde'), { target: { value: '1921' } });
+  expect(screen.getByText('Nadie suma puntos acá')).toBeInTheDocument();
+  expect(screen.getByLabelText('Hasta')).toBe(hasta);
+  fireEvent.change(screen.getByLabelText('Desde'), { target: { value: '1920' } });
+  expect(screen.getByLabelText('Hasta')).toBe(hasta);
+  expect(rows().length).toBeGreaterThan(0);
+});
+
+test('un link sin amateurismo con el rango entero amateur se abre hasta hoy', () => {
+  setup({ filters: { includeAmateur: false, from: 1920, to: 1940 } });
+  expect(useStore.getState().filters).toMatchObject({ from: 1950, to: 2015 });
+});
+
+describe('elegir clubes para comparar', () => {
+  const badges = (c: HTMLElement) => [...c.querySelectorAll('g[data-badge]')].map((g) => g.getAttribute('data-badge'));
+  const row = (id: string) => within(screen.getAllByTestId('fila').find((r) => r.dataset.club === id)!).getByRole('button');
+  const compare = () => userEvent.click(screen.getByRole('button', { name: 'Elegir clubes para comparar' }));
+
+  test('por defecto van los primeros y tocar una fila abre el detalle', async () => {
+    const { container } = setup();
+    expect(badges(container)).toEqual(['beta', 'zeta', 'alfa']);
+    await userEvent.click(row('alfa'));
+    expect(row('alfa')).toHaveAttribute('aria-expanded', 'true');
+    expect(useStore.getState().selected).toBeNull();
+  });
+
+  test('en modo comparar, tocar una fila la saca o la pone en el gráfico', async () => {
+    const { container } = setup();
+    await compare();
+    expect(screen.getByText('Tocá los clubes que querés comparar: 3 de 8')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Listo' })).toBeInTheDocument();
+    expect(row('zeta')).toHaveAttribute('aria-pressed', 'true');
+    await userEvent.click(row('zeta'));
+    expect(row('zeta')).toHaveAttribute('aria-pressed', 'false');
+    expect(badges(container)).toEqual(['beta', 'alfa']);
+    expect(container.querySelector('path[data-club="zeta"]')).toHaveClass('race-line-dim');
+    expect(within(row('zeta')).queryByText('', { selector: '[data-swatch]' })).toBeNull();
+    await userEvent.click(row('zeta'));
+    expect(badges(container)).toEqual(['beta', 'zeta', 'alfa']);
+    await userEvent.click(screen.getByRole('button', { name: 'Listo' }));
+    expect(screen.getByText('Comparando 3 clubes. Tocá uno para ver sus títulos')).toBeInTheDocument();
+    expect(row('zeta')).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  test('siempre queda al menos un club', async () => {
+    setup({ selected: ['alfa'] });
+    await compare();
+    expect(screen.getByText('Tiene que quedar al menos uno. Tocá otros clubes para sumarlos')).toBeInTheDocument();
+    expect(row('alfa')).toHaveAttribute('aria-disabled', 'true');
+    await userEvent.click(row('alfa'));
+    expect(useStore.getState().selected).toEqual(['alfa']);
+  });
+
+  test('volver a los primeros borra la selección', async () => {
+    const { container } = setup({ selected: ['alfa'] });
+    expect(badges(container)).toEqual(['alfa']);
+    await userEvent.click(screen.getByRole('button', { name: 'Volver a los primeros' }));
+    expect(useStore.getState().selected).toBeNull();
+    expect(badges(container)).toEqual(['beta', 'zeta', 'alfa']);
+  });
+
+  test('un elegido que no suma en el rango no se dibuja ni se reemplaza, y vuelve al ampliar', () => {
+    const { container } = setup({ selected: ['alfa', 'beta'] });
+    fireEvent.change(screen.getByLabelText('Hasta'), { target: { value: '1980' } });
+    expect(badges(container)).toEqual(['beta']);
+    fireEvent.change(screen.getByLabelText('Hasta'), { target: { value: '1960' } });
+    expect(badges(container)).toEqual([]);
+    expect(screen.getByText('Ninguno de los clubes elegidos suma puntos en estos años')).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Hasta'), { target: { value: '2015' } });
+    expect(badges(container)).toEqual(['beta', 'alfa']);
+  });
+
+  test('la selección viaja en el link con el código corto', async () => {
+    vi.useFakeTimers();
+    try {
+      setup({ selected: ['alfa', 'zeta'] });
+      vi.advanceTimersByTime(300);
+      expect(window.location.search).toMatch(/&e=ALF\.ZET$/);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('en la carrera, la tabla en vivo muestra solo a los elegidos', () => {
+    setup({ step: 'carrera', selected: ['alfa'] });
+    // Zeta ya suma en el primer año, pero no está elegido.
+    expect(screen.queryAllByTestId('vivo')).toHaveLength(0);
+    fireEvent.click(screen.getByRole('button', { name: 'Saltar' }));
+    expect(useStore.getState().step).toBe('resultado');
+  });
+
+  test('en la carrera aparece el elegido cuando suma', () => {
+    setup({ step: 'carrera', selected: ['zeta'] });
+    expect(screen.getAllByTestId('vivo').map((li) => li.textContent)).toEqual([expect.stringContaining('Zeta')]);
+  });
+
+  test('si ningún elegido suma, la carrera se corre con los primeros', () => {
+    const { container } = setup({ step: 'carrera', selected: ['alfa'], filters: { includeAmateur: true, from: 1920, to: 1980 } });
+    expect(screen.getAllByTestId('vivo').length).toBeGreaterThan(0);
+    expect(badges(container)).toEqual(['zeta', 'beta']);
+    expect(useStore.getState().selected).toEqual(['alfa']);
+  });
+
+  test('tocar otra fila no pierde a los elegidos que hoy no suman', async () => {
+    const { container } = setup({ selected: ['alfa', 'beta'] });
+    fireEvent.change(screen.getByLabelText('Hasta'), { target: { value: '1980' } });
+    await compare();
+    await userEvent.click(row('zeta'));
+    expect(useStore.getState().selected).toEqual(['alfa', 'beta', 'zeta']);
+    fireEvent.change(screen.getByLabelText('Hasta'), { target: { value: '2015' } });
+    expect(badges(container)).toEqual(['beta', 'zeta', 'alfa']);
+  });
+
+  test('con ocho elegidos avisa que hay que sacar uno', async () => {
+    setup({ selected: ['alfa', 'beta', 'x1', 'x2', 'x3', 'x4', 'x5', 'x6'] });
+    await compare();
+    expect(screen.getByText('Ya hay 8 elegidos: sacá uno para sumar otro')).toBeInTheDocument();
+    expect(row('zeta')).toHaveAttribute('aria-disabled', 'true');
+    await userEvent.click(row('zeta'));
+    expect(useStore.getState().selected).not.toContain('zeta');
+  });
+});

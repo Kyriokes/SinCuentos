@@ -38,6 +38,58 @@
   margin-top: var(--s4);
 }
 
+/* ---------- Barra ---------- */
+/* Mide menos que una franja y lleva su color: pegada arriba se funde con el césped fijo del fondo. */
+.barra {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s4);
+  min-height: 52px;
+  padding: var(--s2) var(--s5);
+  background: var(--cesped);
+  border-bottom: 2px dashed var(--cal-tenue);
+}
+
+.barra-marca {
+  font-size: 24px;
+  padding: var(--s2) 0;
+}
+
+.barra-reinicio {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  padding: var(--s2) 0;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--cal-suave);
+}
+
+.barra-reinicio svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.barra-reinicio:hover {
+  color: var(--cal);
+}
+
+.barra-marca:active,
+.barra-reinicio:active {
+  transform: translateY(2px);
+}
+
+.barra + .screen {
+  padding-top: var(--s5);
+}
+
 /* ---------- Botones ---------- */
 .btn {
   display: block;
@@ -748,8 +800,62 @@
   color: var(--cal-suave);
 }
 
-.pista + .tabla {
+.pista-fila {
+  margin-top: var(--s5);
+}
+
+/* Mientras se elige, el contador y "Listo" acompañan el scroll debajo de la barra. */
+.pista-fila.fija {
+  position: sticky;
+  top: 56px;
+  z-index: 5;
+  padding: var(--s2) 0;
+  background: var(--cesped);
+  border-bottom: 2px dashed var(--cal-tenue);
+}
+
+.pista-fila .pista {
+  margin-top: 0;
+}
+
+.pista-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--s4);
+}
+
+.pista-fila + .tabla {
   margin-top: var(--s2);
+}
+
+/* Modo comparar: la casilla ocupa el lugar de la flecha; los no elegidos se apagan. */
+.casilla {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--cal);
+  border-radius: 2px;
+}
+
+.casilla[data-on] {
+  background: var(--cal);
+}
+
+/* Las no elegidas apagan insignia y números pero el nombre se sigue leyendo; solo las bloqueadas se apagan enteras. */
+.apagada .fila-btn > :not(.casilla):not(.club) {
+  opacity: 0.45;
+}
+
+.apagada .fila-btn[aria-disabled='true'] > .club {
+  opacity: 0.45;
+}
+
+.fila-btn[aria-disabled='true'] {
+  cursor: not-allowed;
+}
+
+.apagada .fila-btn[aria-disabled='true'] .casilla {
+  border-style: dashed;
+  opacity: 0.45;
 }
 
 .flecha {

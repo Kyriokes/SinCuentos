@@ -1,8 +1,8 @@
 import { create } from 'zustand';
-import { decodeShare } from '../core/share';
+import { decodeShare, MAX_SELECTED } from '../core/share';
 import type { CancheroAnswers, Filters, ScoredCategory, Weights } from '../core/types';
 import { cancheroWeights, DEFAULT_WEIGHTS } from '../core/weights';
-import { YEAR_BOUNDS } from '../data';
+import { CLUBS, YEAR_BOUNDS } from '../data';
 
 export type Step = 'inicio' | 'canchero' | 'nerd' | 'calculo' | 'carrera' | 'resultado';
 
@@ -12,6 +12,9 @@ export interface AppState {
   answers: (number | null)[];
   weights: Weights;
   filters: Filters;
+  /** Clubes elegidos para comparar en el gráfico; null = los primeros del ranking. */
+  selected: string[] | null;
+  setSelected(ids: string[] | null): void;
   start(mode: 'c' | 'n'): void;
   answer(index: 0 | 1 | 2, value: number): void;
   setWeight(cat: ScoredCategory, value: number): void;
@@ -27,7 +30,19 @@ const initial = () => ({
   answers: [null, null, null] as (number | null)[],
   weights: { ...DEFAULT_WEIGHTS },
   filters: { includeAmateur: true, from: YEAR_BOUNDS.min, to: YEAR_BOUNDS.max },
+  selected: null as string[] | null,
 });
+
+const cleanSelected = (ids: string[] | null) => {
+  const unique = [...new Set(ids ?? [])].slice(0, MAX_SELECTED);
+  return unique.length ? unique : null;
+};
+
+/** Los links llevan el código corto de cada club; los que no existen se descartan. */
+const idsFromCodes = (codes: string[] | undefined) => {
+  const byCode = new Map(CLUBS.map((c) => [c.shortName, c.id]));
+  return cleanSelected((codes ?? []).flatMap((code) => byCode.get(code) ?? []));
+};
 
 const clampYear = (y: number) => Math.min(YEAR_BOUNDS.max, Math.max(YEAR_BOUNDS.min, Math.trunc(y)));
 
@@ -64,6 +79,8 @@ export const useStore = create<AppState>((set) => ({
       return { filters: next };
     }),
 
+  setSelected: (ids) => set({ selected: cleanSelected(ids) }),
+
   go: (step) => set({ step }),
 
   reset: () => set(initial()),
@@ -71,9 +88,10 @@ export const useStore = create<AppState>((set) => ({
   loadFromUrl: (search) => {
     const shared = decodeShare(search, YEAR_BOUNDS);
     if (!shared) return set(initial());
+    const selected = idsFromCodes(shared.selected);
     if (shared.mode === 'c') {
-      return set({ step: 'carrera', mode: 'c', answers: [...shared.answers], weights: cancheroWeights(shared.answers), filters: shared.filters });
+      return set({ step: 'carrera', mode: 'c', answers: [...shared.answers], weights: cancheroWeights(shared.answers), filters: shared.filters, selected });
     }
-    set({ step: 'carrera', mode: 'n', answers: [null, null, null], weights: shared.weights, filters: shared.filters });
+    set({ step: 'carrera', mode: 'n', answers: [null, null, null], weights: shared.weights, filters: shared.filters, selected });
   },
 }));

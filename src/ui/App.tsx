@@ -8,6 +8,7 @@ import { Resultado } from './screens/Resultado';
 
 export function App() {
   const step = useStore((s) => s.step);
+  const reset = useStore((s) => s.reset);
   const showsResult = step === 'carrera' || step === 'resultado';
 
   useEffect(() => {
@@ -18,6 +19,20 @@ export function App() {
 
   return (
     <main className="app">
+      {/* Siempre a mano: la marca vuelve al inicio desde cualquier pantalla, también en plena carrera. */}
+      {step !== 'inicio' && (
+        <header className="barra">
+          <button type="button" className="display barra-marca" onClick={reset} aria-label="Sin cuentos: volver al inicio">
+            Sin cuentos
+          </button>
+          <button type="button" className="barra-reinicio" onClick={reset}>
+            <svg viewBox="0 0 16 16" width={16} height={16} aria-hidden="true">
+              <path d="M3 8a5 5 0 1 0 1.6-3.7M3 2.5V5h2.5" />
+            </svg>
+            Empezar de nuevo
+          </button>
+        </header>
+      )}
       {step === 'inicio' && <Inicio />}
       {step === 'canchero' && <Canchero />}
       {step === 'nerd' && <Nerd />}

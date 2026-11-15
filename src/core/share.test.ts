@@ -43,3 +43,34 @@ test.each([
 test('rango fuera de límites se recorta', () => {
   expect(decodeShare('v=1&m=c&q=000&a=1&d=1800-2100', B)!.filters).toMatchObject({ from: 1891, to: 2025 });
 });
+
+describe('clubes elegidos para comparar', () => {
+  const base = { mode: 'n' as const, weights: DEFAULT_WEIGHTS, filters: { includeAmateur: true, from: 1900, to: 2000 } };
+  const BOUNDS = { min: 1891, max: 2026 };
+
+  test('ida y vuelta con selección', () => {
+    const query = encodeShare({ ...base, selected: ['BOC', 'RIV', 'CASI'] });
+    expect(query).toMatch(/&e=BOC\.RIV\.CASI$/);
+    expect(decodeShare(query, BOUNDS)).toEqual({ ...base, selected: ['BOC', 'RIV', 'CASI'] });
+  });
+
+  test('sin selección el link queda igual que antes', () => {
+    const query = encodeShare(base);
+    expect(query).not.toContain('e=');
+    expect(encodeShare({ ...base, selected: [] })).toBe(query);
+    expect(decodeShare(query, BOUNDS)).toEqual(base);
+  });
+
+  test('una selección rota se ignora sin invalidar el link', () => {
+    const query = encodeShare(base);
+    expect(decodeShare(`${query}&e=`, BOUNDS)).toEqual(base);
+    expect(decodeShare(`${query}&e=<x>.boc..`, BOUNDS)).toEqual(base);
+    expect(decodeShare(`${query}&e=BOC.<x>.BOC.RIV`, BOUNDS)).toEqual({ ...base, selected: ['BOC', 'RIV'] });
+  });
+
+  test('nunca más de ocho', () => {
+    const many = ['AA', 'BB', 'CC', 'DD', 'EE', 'FF', 'GG', 'HH', 'II', 'JJ'];
+    expect(decodeShare(`${encodeShare(base)}&e=${many.join('.')}`, BOUNDS)?.selected).toEqual(many.slice(0, 8));
+    expect(encodeShare({ ...base, selected: many })).toMatch(/&e=AA\.BB\.CC\.DD\.EE\.FF\.GG\.HH$/);
+  });
+});
