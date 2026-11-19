@@ -14,6 +14,10 @@ export interface AppState {
   filters: Filters;
   /** Clubes elegidos para comparar en el gráfico; null = los primeros del ranking. */
   selected: string[] | null;
+  /** El resultado vino de un link: son las reglas de otra persona. */
+  fromLink: boolean;
+  /** Se abrió un link de resultado que no se pudo leer (cortado o modificado). */
+  linkError: boolean;
   setSelected(ids: string[] | null): void;
   start(mode: 'c' | 'n'): void;
   answer(index: 0 | 1 | 2, value: number): void;
@@ -31,6 +35,8 @@ const initial = () => ({
   weights: { ...DEFAULT_WEIGHTS },
   filters: { includeAmateur: true, from: YEAR_BOUNDS.min, to: YEAR_BOUNDS.max },
   selected: null as string[] | null,
+  fromLink: false,
+  linkError: false,
 });
 
 const cleanSelected = (ids: string[] | null) => {
@@ -50,7 +56,8 @@ export const useStore = create<AppState>((set) => ({
   ...initial(),
 
   // El modo nerd conserva los pesos actuales: llega con lo que eligió el canchero.
-  start: (mode) => set(mode === 'c' ? { mode, step: 'canchero', answers: [null, null, null] } : { mode, step: 'nerd' }),
+  start: (mode) =>
+    set({ ...(mode === 'c' ? { mode, step: 'canchero', answers: [null, null, null] } : { mode, step: 'nerd' }), fromLink: false, linkError: false }),
 
   answer: (index, value) =>
     set((state) => {
@@ -87,11 +94,11 @@ export const useStore = create<AppState>((set) => ({
 
   loadFromUrl: (search) => {
     const shared = decodeShare(search, YEAR_BOUNDS);
-    if (!shared) return set(initial());
+    if (!shared) return set({ ...initial(), linkError: new URLSearchParams(search).has('v') });
     const selected = idsFromCodes(shared.selected);
     if (shared.mode === 'c') {
-      return set({ step: 'carrera', mode: 'c', answers: [...shared.answers], weights: cancheroWeights(shared.answers), filters: shared.filters, selected });
+      return set({ step: 'carrera', mode: 'c', answers: [...shared.answers], weights: cancheroWeights(shared.answers), filters: shared.filters, selected, fromLink: true, linkError: false });
     }
-    set({ step: 'carrera', mode: 'n', answers: [null, null, null], weights: shared.weights, filters: shared.filters, selected });
+    set({ step: 'carrera', mode: 'n', answers: [null, null, null], weights: shared.weights, filters: shared.filters, selected, fromLink: true, linkError: false });
   },
 }));

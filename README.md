@@ -4,11 +4,14 @@ Ranking histórico de clubes del fútbol argentino en el que cada persona decide
 
 - **Canchero:** tres preguntas en cadena y sale el ranking.
 - **Nerd de la pelota:** seis valores enteros, uno por tipo de título.
-- El resultado se anima año por año y se comparte con un link.
+- El resultado se anima año por año y se comparte con un link (en el celular, con el menú de compartir del sistema).
+- Se pueden elegir hasta 8 clubes para comparar en el gráfico; la selección viaja en el link.
+- Quien abre un link compartido ve con qué reglas se armó ese ranking y puede armar el suyo.
+- Una barra arriba permite volver al inicio desde cualquier pantalla.
 
 ## Cómo correrlo
 
-Requiere Node 20 o superior.
+Requiere Node 22.22, 24.15 o 26 en adelante (lo piden vitest y jsdom). La versión de referencia está en `.nvmrc`.
 
 ```bash
 npm install
@@ -25,6 +28,14 @@ npm test
 ```bash
 npm run build
 ```
+
+`npm run check` corre todo lo que corre la integración continua (`.github/workflows/ci.yml`): tipos, tests y build.
+
+## Publicarlo
+
+- Definí `VITE_SITE_URL` con la dirección del sitio (por ejemplo `https://sincuentos.com.ar`) en el entorno del build. Con eso la imagen para compartir (`public/og.png`) va con URL absoluta, que es lo que exigen WhatsApp, X y Facebook, y se agregan `og:url` y `canonical`.
+- El HTML publicado lleva una política de seguridad de contenido (CSP) como `<meta>`. `public/_headers` suma las cabeceras que una `<meta>` no puede dar (anti-iframe, `nosniff`) y el caché largo de `/assets`; lo leen Netlify y Cloudflare Pages. En Vercel van en `vercel.json`.
+- `npm run preview` sirve el build para probarlo antes de publicar.
 
 ## Cómo está armado
 
@@ -49,6 +60,8 @@ Reglas que se aplican igual a todos los clubes:
 - Supercopas, recopas y copas menores van a la vitrina: no suman puntos y solo desempatan.
 
 Las insignias son propias (colores e iniciales), no los escudos oficiales. Los colores de los clubes todavía no están verificados contra una fuente.
+
+El nombre corto de cada club (`shortName`) es su código en los links compartidos (`e=BOC.RIV`): no hay que cambiarlo ni repetirlo, porque rompería los links que ya circulan. `npm test` lo controla.
 
 ## Reportar un error en un título
 

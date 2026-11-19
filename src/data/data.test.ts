@@ -1,3 +1,4 @@
+import { CLUB_CODE } from '../core/share';
 import expected from './expected-totals.json';
 import { CLUBS, COMPETITIONS, TITLE_ROWS, TITLES, YEAR_BOUNDS } from './index';
 
@@ -22,8 +23,34 @@ test('todo club aparece en algún título y no hay ids repetidos', () => {
   expect(competitionById.size).toBe(COMPETITIONS.length);
 });
 
-test('toda fila tiene una fuente https', () => {
-  expect(TITLE_ROWS.filter((r) => !r.source?.startsWith('https://'))).toEqual([]);
+/** Las fuentes van a un link en el desglose: solo se aceptan los sitios de referencia, y siempre por https. */
+const SOURCE_HOSTS = ['www.afa.com.ar', 'www.rsssf.org', 'es.wikipedia.org'];
+
+test('toda fila tiene una fuente https de un sitio de referencia', () => {
+  const bad = TITLE_ROWS.filter((r) => {
+    try {
+      const url = new URL(r.source);
+      return url.protocol !== 'https:' || !SOURCE_HOSTS.includes(url.hostname);
+    } catch {
+      return true;
+    }
+  });
+  expect(bad).toEqual([]);
+});
+
+test('no hay títulos cargados dos veces para el mismo club', () => {
+  const seen = new Set<string>();
+  const twice = TITLE_ROWS.filter((r) => {
+    const key = [r.year, r.competitionId, r.clubId, r.edition ?? '', r.season ?? ''].join('|');
+    if (seen.has(key)) return true;
+    seen.add(key);
+    return false;
+  });
+  expect(twice).toEqual([]);
+});
+
+test('ningún título es de un año que todavía no llegó', () => {
+  expect(TITLE_ROWS.filter((r) => r.year > new Date().getFullYear())).toEqual([]);
 });
 
 test('la era amateur termina en 1934 y no incluye torneos de CONMEBOL ni FIFA', () => {
@@ -53,6 +80,12 @@ test('los colores son dos hex y el nombre corto tiene hasta 4 letras', () => {
   const hex = /^#[0-9a-f]{6}$/i;
   expect(CLUBS.filter((c) => c.colors.length !== 2 || !c.colors.every((x) => hex.test(x)))).toEqual([]);
   expect(CLUBS.filter((c) => c.shortName.length < 2 || c.shortName.length > 4)).toEqual([]);
+});
+
+test('el nombre corto sirve de código en el link: único y con el formato que acepta el link', () => {
+  // Cambiar o repetir un código rompe los links ya compartidos que lo usan (parámetro e=).
+  expect(CLUBS.filter((c) => !CLUB_CODE.test(c.shortName))).toEqual([]);
+  expect(new Set(CLUBS.map((c) => c.shortName)).size).toBe(CLUBS.length);
 });
 
 test('los totales coinciden con los listados oficiales', () => {

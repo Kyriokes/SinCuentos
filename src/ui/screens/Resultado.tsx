@@ -1,9 +1,10 @@
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { computeRanking, computeTimeline, type ClubResult } from '../../core/score';
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+import { firstProfessionalYear, professionalRange, toggleAmateur as toggledRange, type YearRange } from '../../core/range';
+import { computeRanking, computeTimeline, inRange, isVitrina, type ClubResult } from '../../core/score';
 import { encodeShare, MAX_SELECTED } from '../../core/share';
-import type { CancheroAnswers, Club, Competition, Title } from '../../core/types';
+import type { CancheroAnswers, Club, Competition, Title, Weights } from '../../core/types';
 import { SCORED_ORDER } from '../../core/weights';
 import { CLUBS, COMPETITIONS, TITLES, YEAR_BOUNDS } from '../../data';
 import { useStore } from '../../state/store';
@@ -26,6 +27,8 @@ const REAL: ResultadoData = { clubs: CLUBS, competitions: COMPETITIONS, titles: 
 /** Filas de la tabla en vivo que acompaña a la carrera. */
 const LIVE_ROWS = 5;
 
+type ShareState = 'no' | 'yes' | 'manual';
+
 export function Resultado({ data = REAL }: { data?: ResultadoData }) {
   const step = useStore((s) => s.step);
   const mode = useStore((s) => s.mode);
@@ -37,23 +40,28 @@ export function Resultado({ data = REAL }: { data?: ResultadoData }) {
   const start = useStore((s) => s.start);
   const selected = useStore((s) => s.selected);
   const setSelected = useStore((s) => s.setSelected);
+  const fromLink = useStore((s) => s.fromLink);
 
   const [open, setOpen] = useState<string | null>(null);
   /** En modo comparar, tocar una fila la elige para el gráfico en vez de abrir su detalle. */
   const [comparing, setComparing] = useState(false);
   /** Año por el que va la carrera, como índice de la serie. */
   const [raceIndex, setRaceIndex] = useState(0);
-  const [copied, setCopied] = useState<'no' | 'yes' | 'manual'>('no');
+  const [copied, setCopied] = useState<ShareState>('no');
   /** El podio se levanta solo cuando viene de terminar la carrera, no al mover filtros. */
   const [reveal, setReveal] = useState(false);
 
   const liveRef = useRef<HTMLOListElement>(null);
   const tableRef = useRef<HTMLOListElement>(null);
+  const heading = useRef<HTMLHeadingElement>(null);
   useSlideRows(liveRef);
   useSlideRows(tableRef);
 
-  const ranking = useMemo(() => computeRanking(data.titles, weights, filters, data.clubs), [data, weights, filters]);
-  const timeline = useMemo(() => computeTimeline(data.titles, weights, filters, data.clubs), [data, weights, filters]);
+  // Lo que sigue al dedo (los años del slider) usa `filters`; lo caro (ranking, gráfico, tabla) usa la versión
+  // diferida: React la recalcula cuando hay tiempo y descarta los pasos intermedios de un arrastre rápido.
+  const view = useDeferredValue(filters);
+  const ranking = useMemo(() => computeRanking(data.titles, weights, view, data.clubs), [data, weights, view]);
+  const timeline = useMemo(() => computeTimeline(data.titles, weights, view, data.clubs), [data, weights, view]);
   const clubById = useMemo(() => new Map(data.clubs.map((c) => [c.id, c])), [data]);
   const competitionName = useMemo(() => new Map(data.competitions.map((c) => [c.id, c.name])), [data]);
 
@@ -81,44 +89,21 @@ export function Resultado({ data = REAL }: { data?: ResultadoData }) {
   };
 
   // Sin amateurismo, los años anteriores al profesionalismo quedan vacíos: el slider no los ofrece.
-  const firstProfessional = useMemo(
-    () => Math.min(data.bounds.max, ...data.titles.filter((t) => t.era === 'profesional').map((t) => t.year)),
-    [data],
-  );
+  const firstProfessional = useMemo(() => firstProfessionalYear(data.titles, data.bounds.max), [data]);
   const sliderMin = filters.includeAmateur ? data.bounds.min : firstProfessional;
-
-  /** El rango que queda sin amateurismo. Si era entero amateur no se aplasta en un solo año: se abre hasta hoy. */
-  const professionalRange = useCallback(
-    (from: number, to: number) => ({ from: Math.max(from, firstProfessional), to: to < firstProfessional ? data.bounds.max : to }),
-    [firstProfessional, data],
-  );
 
   // Un link sin amateurismo puede traer años anteriores al profesionalismo.
   useEffect(() => {
-    if (!filters.includeAmateur && filters.from < firstProfessional) setFilters(professionalRange(filters.from, filters.to));
-  }, [filters.includeAmateur, filters.from, filters.to, firstProfessional, professionalRange, setFilters]);
+    if (!filters.includeAmateur && filters.from < firstProfessional) setFilters(professionalRange(filters, firstProfessional, data.bounds.max));
+  }, [filters, firstProfessional, data, setFilters]);
 
   /** Rango que había al destildar el amateurismo, para devolverlo tal cual al volver a tildar. */
-  const beforeOff = useRef<{ from: number; to: number } | null>(null);
+  const beforeOff = useRef<YearRange | null>(null);
 
   const toggleAmateur = (include: boolean) => {
-    if (!include) {
-      beforeOff.current = { from: filters.from, to: filters.to };
-      return setFilters({ includeAmateur: false, ...professionalRange(filters.from, filters.to) });
-    }
-    const saved = beforeOff.current;
-    beforeOff.current = null;
-    let { from, to } = filters;
-    if (saved) {
-      // Cada extremo vuelve a donde estaba, salvo que se lo haya movido mientras tanto.
-      const clamped = professionalRange(saved.from, saved.to);
-      if (from === clamped.from) from = saved.from;
-      if (to === clamped.to && saved.to >= from) to = saved.to;
-    } else if (from === firstProfessional) {
-      // Sin rango anterior (un link sin amateurismo): el piso profesional equivale a "desde el principio".
-      from = data.bounds.min;
-    }
-    setFilters({ includeAmateur: true, from, to });
+    const next = toggledRange(filters, include, beforeOff.current, firstProfessional, data.bounds);
+    beforeOff.current = next.saved;
+    setFilters(next.filters);
   };
 
   const empty = ranking.length === 0;
@@ -126,13 +111,14 @@ export function Resultado({ data = REAL }: { data?: ResultadoData }) {
 
   // Una carrera sin nadie no muestra nada: si ningún elegido suma, se corre con los primeros.
   const fallback = racing && selected !== null && lit.length === 0;
-  const shown = fallback ? ranking.slice(0, MAX_SELECTED).map((r) => r.clubId) : lit;
+  const shown = useMemo(() => (fallback ? ranking.slice(0, MAX_SELECTED).map((r) => r.clubId) : lit), [fallback, ranking, lit]);
 
   const codes = selected?.flatMap((id) => clubById.get(id)?.shortName ?? []);
   const query =
     mode === 'c' && answers.every((a) => a !== null)
       ? encodeShare({ mode: 'c', answers: answers as CancheroAnswers, filters, selected: codes })
       : encodeShare({ mode: 'n', weights, filters, selected: codes });
+  const url = `${window.location.origin}${window.location.pathname}?${query}`;
 
   // La barra de direcciones siempre lleva el resultado que se está viendo.
   // Se espera a que el slider se quede quieto: Safari corta la página si se la actualiza
@@ -158,20 +144,43 @@ export function Resultado({ data = REAL }: { data?: ResultadoData }) {
     if (empty) setReveal(false);
   }, [empty]);
 
-  const share = () => {
-    const url = `${window.location.origin}${window.location.pathname}?${query}`;
-    const clipboard = navigator.clipboard;
-    if (!clipboard) return setCopied('manual');
-    clipboard.writeText(url).then(
-      () => setCopied('yes'),
-      () => setCopied('manual'),
-    );
+  // Al empezar la carrera y al terminar, el foco va al título de lo que se está viendo: con teclado o lector
+  // de pantalla, sin esto queda en un botón que ya no existe y no se anuncia nada.
+  useEffect(() => {
+    heading.current?.focus({ preventScroll: true });
+  }, [racing]);
+
+  const onRaceDone = useCallback(() => {
+    setReveal(true);
+    go('resultado');
+  }, [go]);
+
+  const share = async () => {
+    // En el celular, el menú de compartir del sistema lleva directo a WhatsApp o donde sea, con un texto que
+    // cuenta qué es el link antes de tocarlo. En la compu, copiar es lo esperable.
+    const podium = ranking
+      .slice(0, 3)
+      .map((r) => `${r.rank}. ${clubById.get(r.clubId)?.name ?? r.clubId} ${r.points}`)
+      .join(', ');
+    const text = `${fromLink ? 'Este ranking' : 'Mi ranking'} del fútbol argentino: ${podium}. ¿Cuál es el tuyo?`;
+    if (window.matchMedia('(pointer: coarse)').matches && typeof navigator.share === 'function') {
+      try {
+        await navigator.share({ title: 'Sin Cuentos', text, url });
+        return;
+      } catch (error) {
+        // Cerrar el menú sin elegir nada no es un error: no hay nada que avisar.
+        if ((error as DOMException)?.name === 'AbortError') return;
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied('yes');
+    } catch {
+      setCopied('manual');
+    }
   };
 
-  const titlesOf = (clubId: string) =>
-    data.titles
-      .filter((t) => t.clubId === clubId && t.year >= filters.from && t.year <= filters.to && (filters.includeAmateur || t.era === 'profesional'))
-      .sort((a, b) => a.year - b.year);
+  const titlesOf = (clubId: string) => data.titles.filter((t) => t.clubId === clubId && inRange(t, view)).sort((a, b) => a.year - b.year);
 
   const controls = (
     <div className="controles">
@@ -185,26 +194,43 @@ export function Resultado({ data = REAL }: { data?: ResultadoData }) {
 
   const allZero = empty && SCORED_ORDER.every((cat) => weights[cat] === 0);
 
+  const shareButton = (
+    <button type="button" className={fromLink ? 'btn' : 'btn btn-primary'} onClick={share}>
+      Compartir
+    </button>
+  );
+
   return (
     <section className="screen resultado">
       {empty ? (
         <>
-          <h2 className="display pregunta">{allZero ? 'Con todo en cero no hay ranking' : 'Nadie suma puntos acá'}</h2>
+          <h1 className="display pregunta" ref={heading} tabIndex={-1}>
+            {allZero ? 'Con todo en cero no hay ranking' : 'Nadie suma puntos acá'}
+          </h1>
           <p className="ayuda">
             {allZero ? 'Todos los valores están en cero. Subí alguno en la calculadora.' : 'Ningún club ganó un título que cuente en estos años. Ampliá el rango.'}
           </p>
         </>
+      ) : racing ? (
+        <h1 className="sr-only" ref={heading} tabIndex={-1}>
+          Carrera de {view.from} a {view.to}
+        </h1>
       ) : (
-        !racing && (
-          <>
-            <p className="paso">
-              {filters.from} a {filters.to}
-              {filters.includeAmateur ? '' : ', sin amateurismo'}
+        <>
+          <p className="paso">
+            {view.from} a {view.to}
+            {view.includeAmateur ? '' : ', sin amateurismo'}
+          </p>
+          <h1 className="display pregunta" ref={heading} tabIndex={-1}>
+            {fromLink ? 'El ranking que te pasaron' : 'Tu ranking'}
+          </h1>
+          {fromLink && (
+            <p className="ayuda reglas">
+              Con estas reglas: {SCORED_ORDER.map((cat) => `${CATEGORY_LABEL[cat]} ${weights[cat]}`).join(' · ')}.
             </p>
-            <h2 className="display pregunta">Tu ranking</h2>
-            <Podio ranking={ranking} clubById={clubById} reveal={reveal} />
-          </>
-        )
+          )}
+          <Podio ranking={ranking} clubById={clubById} reveal={reveal} />
+        </>
       )}
 
       {/* Con el rango vacío el gráfico se oculta pero los controles siguen en su lugar: el slider no se desmonta en pleno arrastre. */}
@@ -215,10 +241,7 @@ export function Resultado({ data = REAL }: { data?: ResultadoData }) {
           highlight={shown}
           rescale={selected !== null && !fallback}
           animate={step === 'carrera'}
-          onDone={() => {
-            setReveal(true);
-            go('resultado');
-          }}
+          onDone={onRaceDone}
           onYear={setRaceIndex}
           colors={lineColors}
         />
@@ -297,7 +320,7 @@ export function Resultado({ data = REAL }: { data?: ResultadoData }) {
               </div>
             </div>
           )}
-          <ol className={comparing ? 'tabla comparando' : 'tabla'} hidden={empty} ref={tableRef}>
+          <ol className={comparing ? 'tabla comparando' : 'tabla'} hidden={empty} ref={tableRef} role="list">
             {ranking.map((r) => {
               const club = clubById.get(r.clubId);
               const isOpen = !comparing && open === r.clubId;
@@ -312,7 +335,10 @@ export function Resultado({ data = REAL }: { data?: ResultadoData }) {
                     {...(comparing ? { 'aria-pressed': isLit, 'aria-disabled': full } : { 'aria-expanded': isOpen })}
                     onClick={() => (comparing ? toggleClub(r.clubId) : setOpen(isOpen ? null : r.clubId))}
                   >
-                    <span className="display puesto">{r.rank}</span>
+                    <span className="display puesto">
+                      <span className="sr-only">Puesto </span>
+                      {r.rank}
+                    </span>
                     {club && <BadgeIcon club={club} size={34} />}
                     <span className="club">
                       {club?.name ?? r.clubId}
@@ -324,6 +350,7 @@ export function Resultado({ data = REAL }: { data?: ResultadoData }) {
                     <span className="display puntos" data-testid="puntos">
                       {r.points}
                     </span>
+                    <span className="sr-only"> puntos</span>
                     {comparing ? (
                       <i className="casilla" data-on={isLit || undefined} />
                     ) : (
@@ -337,17 +364,26 @@ export function Resultado({ data = REAL }: { data?: ResultadoData }) {
               );
             })}
           </ol>
+          {!empty && <p className="fine">Copas secundarias: supercopas, recopas y copas menores. No suman puntos; desempatan.</p>}
 
           <div className="acciones">
             {!empty && (
               <>
-                <button type="button" className="btn btn-primary" onClick={share}>
-                  Compartir
-                </button>
-                <p className="aviso" role="status">
+                {fromLink && (
+                  <button type="button" className="btn btn-primary" onClick={() => start('c')}>
+                    Armá el tuyo
+                  </button>
+                )}
+                {shareButton}
+                <div className="aviso" role="status">
                   {copied === 'yes' && 'Link copiado'}
-                  {copied === 'manual' && 'Copiá el link de la barra de direcciones'}
-                </p>
+                  {copied === 'manual' && (
+                    <label className="copiar">
+                      <span>No se pudo copiar solo. Copialo de acá:</span>
+                      <input type="text" readOnly value={url} onFocus={(e) => e.target.select()} autoFocus />
+                    </label>
+                  )}
+                </div>
               </>
             )}
             {empty ? (
@@ -364,7 +400,12 @@ export function Resultado({ data = REAL }: { data?: ResultadoData }) {
               </button>
             )}
           </div>
-          {!empty && <Cafecito />}
+          {!empty && (
+            <>
+              <Cafecito />
+              <p className="fine">Insignias propias: no son los escudos oficiales. Sin relación con los clubes ni con la AFA.</p>
+            </>
+          )}
         </>
       )}
     </section>
@@ -431,7 +472,7 @@ function Podio({ ranking, clubById, reveal }: { ranking: ClubResult[]; clubById:
 
 interface DesgloseProps {
   result: ClubResult;
-  weights: Record<string, number>;
+  weights: Weights;
   titles: Title[];
   competitionName: Map<string, string>;
 }
@@ -447,9 +488,9 @@ function Desglose({ result, weights, titles, competitionName }: DesgloseProps) {
           </div>
         ))}
       </dl>
-      <ul className="titulos">
+      <ul className="titulos" role="list">
         {titles.map((t, i) => (
-          <li key={i} className={t.category === 'vitrina_nacional' || t.category === 'tier_c' ? 'en-vitrina' : undefined}>
+          <li key={i} className={isVitrina(t.category) ? 'en-vitrina' : undefined}>
             <span className="anio">{t.year}</span>
             <span>
               {competitionName.get(t.competitionId) ?? t.competitionId}

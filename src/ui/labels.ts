@@ -1,4 +1,4 @@
-import type { Category, ScoredCategory } from '../core/types';
+import type { Category } from '../core/types';
 
 export const CATEGORY_LABEL: Record<Category, string> = {
   liga_corta: 'Torneo corto',
@@ -51,12 +51,3 @@ export const QUESTIONS: Question[] = [
     options: MULTIPLES,
   },
 ];
-
-export const SCORED_HELP: Record<ScoredCategory, string> = {
-  liga_corta: LIGA_INCLUDES.liga_corta,
-  liga_anual: LIGA_INCLUDES.liga_anual,
-  copa_nacional: '',
-  tier_b: '',
-  tier_a: '',
-  mundo: '',
-};

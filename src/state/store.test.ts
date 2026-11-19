@@ -84,3 +84,24 @@ describe('clubes elegidos', () => {
     expect(s().selected).toBeNull();
   });
 });
+
+describe('origen del resultado', () => {
+  test('un link válido marca que el ranking es de otra persona; empezar de nuevo lo borra', () => {
+    s().loadFromUrl('?v=1&m=c&q=000&a=1&d=1891-2026');
+    expect(s()).toMatchObject({ step: 'carrera', fromLink: true, linkError: false });
+    s().start('n');
+    expect(s().fromLink).toBe(false);
+  });
+  test('un link de resultado que no se puede leer avisa en el inicio', () => {
+    s().loadFromUrl('?v=1&m=c&q=0');
+    expect(s()).toMatchObject({ step: 'inicio', linkError: true, fromLink: false });
+    s().start('c');
+    expect(s().linkError).toBe(false);
+  });
+  test('entrar sin link no es un error', () => {
+    s().loadFromUrl('');
+    expect(s().linkError).toBe(false);
+    s().loadFromUrl('?utm_source=x');
+    expect(s().linkError).toBe(false);
+  });
+});

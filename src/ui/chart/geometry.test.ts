@@ -3,7 +3,7 @@ import { resolveTitles } from '../../core/resolve';
 import { computeTimeline } from '../../core/score';
 import type { Filters } from '../../core/types';
 import { DEFAULT_WEIGHTS } from '../../core/weights';
-import { layoutChart, stackBadges } from './geometry';
+import { layoutChart, niceTicks, stackBadges } from './geometry';
 
 const T = resolveTitles(FIXTURE_ROWS, FIXTURE_COMPETITIONS);
 const ALL: Filters = { includeAmateur: true, from: 1920, to: 2015 };
@@ -55,4 +55,26 @@ test('las insignias que se pisan se apilan hacia arriba', () => {
     26,
   );
   expect([placed.get('a'), placed.get('b'), placed.get('c')].sort((x, y) => x! - y!)).toEqual([40, 74, 100]);
+});
+
+test('la escalera solo tiene un escalón por año en que cambian los puntos', () => {
+  const d = L.paths.find((p) => p.clubId === 'zeta')!.d;
+  // Zeta suma en 1920, 1950, 1970, 1992 y 2005: arranca en 1920 con puntos y tiene cuatro escalones más.
+  expect(d.match(/V/g)).toHaveLength(4);
+  expect(d.startsWith(`M20,`)).toBe(true);
+  expect(d.endsWith('H340')).toBe(true);
+});
+
+test('las marcas del eje vertical son enteras y redondas', () => {
+  expect(niceTicks(14, 5)).toEqual([0, 2, 4, 6, 8, 10, 12, 14]);
+  expect(niceTicks(112, 5)).toEqual([0, 20, 40, 60, 80, 100]);
+  expect(niceTicks(1, 5)).toEqual([0, 1]);
+  expect(niceTicks(0, 5)).toEqual([0]);
+});
+
+test('con escala ajustada, el máximo de los elegidos toca el borde de arriba', () => {
+  const tl = computeTimeline(T, DEFAULT_WEIGHTS, ALL, FIXTURE_CLUBS);
+  const alfa = tl.series.find((s) => s.clubId === 'alfa')!;
+  const scaled = layoutChart(tl, SIZE, ['alfa']);
+  expect(scaled.yOf(alfa.cumulative[alfa.cumulative.length - 1])).toBe(20);
 });

@@ -13,7 +13,7 @@ El campo es la página. No hay tarjetas, paneles ni sombras: todo lo que aparece
 | Césped | `#14553a` | Fondo, franja oscura |
 | Césped claro | `#175f41` | Franja de corte clara |
 | Cal | `#f4f1e4` | Texto, trazos, líneas del gráfico, botón principal |
-| Cal suave | cal al 72 % | Texto secundario |
+| Cal suave | cal al 78 % | Texto secundario (llega a 4,5:1 sobre la franja clara) |
 | Cal tenue | cal al 22 % | Grilla, separadores punteados, líneas de clubes no destacados |
 | Tinta | `#12372a` | Texto sobre cal |
 

@@ -24,12 +24,16 @@ const emptyCounts = (): Record<Category, number> => ({
   tier_c: 0,
 });
 
-const passes = (title: Title, filters: Filters) =>
+/** Si un título entra en el rango de años y en la era que se están contando. */
+export const inRange = (title: Title, filters: Filters) =>
   title.year >= filters.from && title.year <= filters.to && (filters.includeAmateur || title.era === 'profesional');
+
+/** Copas secundarias: van a la vitrina, no suman puntos y solo desempatan. */
+export const isVitrina = (category: Category) => category === 'vitrina_nacional' || category === 'tier_c';
 
 /** Puntos que suma un título; la vitrina no suma. */
 export function pointsOf(category: Category, weights: Weights): number {
-  return category === 'vitrina_nacional' || category === 'tier_c' ? 0 : weights[category];
+  return isVitrina(category) ? 0 : weights[category];
 }
 
 export function computeRanking(titles: Title[], weights: Weights, filters: Filters, clubs: Club[]): ClubResult[] {
@@ -37,7 +41,7 @@ export function computeRanking(titles: Title[], weights: Weights, filters: Filte
   const byClub = new Map<string, Omit<ClubResult, 'rank'>>();
 
   for (const title of titles) {
-    if (!passes(title, filters)) continue;
+    if (!inRange(title, filters)) continue;
     let entry = byClub.get(title.clubId);
     if (!entry) {
       entry = { clubId: title.clubId, points: 0, vitrina: 0, counts: emptyCounts() };
@@ -45,7 +49,7 @@ export function computeRanking(titles: Title[], weights: Weights, filters: Filte
     }
     entry.counts[title.category] += 1;
     entry.points += pointsOf(title.category, weights);
-    if (title.category === 'vitrina_nacional' || title.category === 'tier_c') entry.vitrina += 1;
+    if (isVitrina(title.category)) entry.vitrina += 1;
   }
 
   const nameOf = (id: string) => names.get(id) ?? id;
@@ -63,7 +67,7 @@ export function computeTimeline(titles: Title[], weights: Weights, filters: Filt
   const gained = new Map(ranking.map((r) => [r.clubId, new Array<number>(years.length).fill(0)]));
 
   for (const title of titles) {
-    if (!passes(title, filters)) continue;
+    if (!inRange(title, filters)) continue;
     const perYear = gained.get(title.clubId);
     if (perYear) perYear[title.year - filters.from] += pointsOf(title.category, weights);
   }

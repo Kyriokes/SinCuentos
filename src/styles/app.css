@@ -7,6 +7,13 @@
   flex-direction: column;
 }
 
+/* La barra queda fuera de <main>: el contenido de cada pantalla ocupa el resto del alto. */
+.contenido {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
 .screen {
   position: relative;
   flex: 1;
@@ -63,6 +70,7 @@
   display: flex;
   align-items: center;
   gap: var(--s2);
+  white-space: nowrap;
   padding: var(--s2) 0;
   font-weight: 600;
   font-size: 15px;
@@ -86,8 +94,30 @@
   transform: translateY(2px);
 }
 
-.barra + .screen {
+.barra + .contenido > .screen {
   padding-top: var(--s5);
+}
+
+/* En pantallas muy angostas la barra no se parte en dos líneas: "Empezar de nuevo" queda solo como ícono
+   (el texto sigue ahí para el lector de pantalla). */
+@media (max-width: 359px) {
+  .barra {
+    padding-inline: var(--s4);
+  }
+
+  .barra-texto {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .barra-reinicio {
+    padding: var(--s2);
+    margin-right: calc(var(--s2) * -1);
+  }
 }
 
 /* ---------- Botones ---------- */
@@ -740,7 +770,6 @@
 .titulos {
   margin-top: var(--s3);
   font-size: 14px;
-  columns: 1;
 }
 
 .titulos li {
@@ -1002,7 +1031,7 @@
 
 /* Las no elegidas apagan insignia y números pero el nombre se sigue leyendo; solo las bloqueadas se apagan enteras. */
 .apagada .fila-btn > :not(.casilla):not(.club) {
-  opacity: 0.45;
+  opacity: 0.55;
 }
 
 .apagada .fila-btn[aria-disabled='true'] > .club {
@@ -1057,5 +1086,76 @@
 @media (prefers-reduced-motion: reduce) {
   .flecha {
     transition: none;
+  }
+}
+
+/* ---------- Accesibilidad y avisos ---------- */
+/* Texto solo para el lector de pantalla. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Los títulos reciben el foco al cambiar de pantalla para que se anuncien; no hace falta dibujarles el contorno. */
+[tabindex='-1']:focus {
+  outline: none;
+}
+
+/* Las reglas de quien pasó el link, debajo del título. */
+.reglas {
+  max-width: none;
+  font-size: 14px;
+  margin-bottom: var(--s2);
+}
+
+/* Si el portapapeles falla, el link queda en un campo para copiarlo a mano. */
+.copiar {
+  display: grid;
+  gap: var(--s1);
+}
+
+.copiar input {
+  width: 100%;
+  padding: var(--s2) var(--s3);
+  border: 2px solid var(--cal);
+  border-radius: var(--radio);
+  background: var(--cesped);
+  font: 600 14px/1.4 var(--texto);
+}
+
+/* Un link de resultado que no se pudo leer. */
+.aviso-link {
+  position: relative;
+  z-index: 1;
+  margin-top: var(--s4);
+  padding: var(--s3) var(--s4);
+  border: 2px dashed var(--cal);
+  border-radius: var(--radio);
+  font-weight: 600;
+}
+
+/* Respaldo del HTML para cuando el JS no corre: espera unos segundos antes de aparecer, así no se ve en una carga normal. */
+.sin-js {
+  max-width: 34ch;
+  margin: 0 auto;
+  padding: var(--s6) var(--s5);
+  font-weight: 600;
+  animation: aparecer 0s 4s both;
+}
+
+@keyframes aparecer {
+  from {
+    visibility: hidden;
+  }
+}
+
+/* Con JavaScript apagado ya avisa el <noscript>: el respaldo de #root sobra. */
+@media (scripting: none) {
+  #root .sin-js {
+    display: none;
   }
 }

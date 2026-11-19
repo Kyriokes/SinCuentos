@@ -1,4 +1,3 @@
-import '@fontsource/big-shoulders-display/800';
 import '@fontsource/big-shoulders-display/900';
 import '@fontsource/archivo/400.css';
 import '@fontsource/archivo/600.css';

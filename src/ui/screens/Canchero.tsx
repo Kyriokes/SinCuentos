@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { SCORED_ORDER } from '../../core/weights';
 import { useStore } from '../../state/store';
 import { CATEGORY_LABEL, QUESTIONS } from '../labels';
@@ -9,6 +10,12 @@ export function Canchero() {
   const go = useStore((s) => s.go);
 
   const current = answers.findIndex((a) => a === null);
+  const heading = useRef<HTMLHeadingElement>(null);
+
+  // Cada pregunta nueva se anuncia: el foco va a su enunciado, no queda en un botón que ahora significa otra cosa.
+  useEffect(() => {
+    heading.current?.focus({ preventScroll: true });
+  }, [current]);
   const finished = current === -1;
   const lastAnswered = finished ? QUESTIONS.length - 1 : current - 1;
 
@@ -23,8 +30,10 @@ export function Canchero() {
     return (
       <section className="screen">
         <p className="paso">Listo</p>
-        <h2 className="display pregunta">Así quedó tu tabla</h2>
-        <ul className="valores">
+        <h1 className="display pregunta" ref={heading} tabIndex={-1}>
+          Así quedó tu tabla
+        </h1>
+        <ul className="valores" role="list">
           {SCORED_ORDER.map((cat) => (
             <li key={cat}>
               <span>{CATEGORY_LABEL[cat]}</span>
@@ -53,7 +62,9 @@ export function Canchero() {
         <p className="paso">
           Pregunta {current + 1} de {QUESTIONS.length}
         </p>
-        <h2 className="display pregunta">{question.title}</h2>
+        <h1 className="display pregunta" ref={heading} tabIndex={-1}>
+          {question.title}
+        </h1>
         <p className="ayuda">{question.help}</p>
       </div>
       <div className="opciones" role="group" aria-label="Opciones" data-count={question.options.length}>

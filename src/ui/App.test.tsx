@@ -20,3 +20,21 @@ test.each(['canchero', 'nerd', 'calculo', 'carrera', 'resultado'] as const)('des
   expect(useStore.getState().step).toBe('inicio');
   expect(screen.getByRole('heading', { level: 1, name: 'Sin cuentos' })).toBeInTheDocument();
 });
+
+test('si una pantalla se rompe, se ofrece volver al inicio en vez de dejar la página vacía', async () => {
+  const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+  // Un estado imposible: pesos que no son números hacen fallar el cálculo de la pantalla Nerd.
+  useStore.setState({ step: 'nerd', weights: null as never });
+  render(<App />);
+  expect(screen.getByRole('heading', { name: 'Algo se rompió' })).toBeInTheDocument();
+  await userEvent.click(screen.getByRole('button', { name: 'Volver al inicio' }));
+  expect(useStore.getState().step).toBe('inicio');
+  expect(screen.getByRole('heading', { level: 1, name: 'Sin cuentos' })).toBeInTheDocument();
+  error.mockRestore();
+});
+
+test('cada pantalla tiene su título de pestaña', () => {
+  useStore.setState({ step: 'nerd' });
+  render(<App />);
+  expect(document.title).toBe('Modo nerd · Sin Cuentos');
+});

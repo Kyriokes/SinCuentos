@@ -188,14 +188,13 @@ describe('amateurismo: ida y vuelta año a año', () => {
     return [from, to];
   };
 
-  // Fixture: datos de 1920 a 2015; el profesionalismo arranca en 1950.
-  test.each(
-    Array.from({ length: 2015 - 1920 + 1 }, (_, i) => 1920 + i).flatMap((from) => [
-      [from, 2015],
-      [from, from],
-      [from, Math.min(2015, from + 7)],
-    ]),
-  )('destildar y volver a tildar deja el rango %i a %i como estaba', async (from, to) => {
+  // Fixture: datos de 1920 a 2015; el profesionalismo arranca en 1950. Todos los rangos posibles se prueban
+  // contra la función pura en src/core/range.test.ts; acá alcanza con verificar que la pantalla la usa bien.
+  test.each([
+    [1920, 2015],
+    [1930, 1940],
+    [1960, 1970],
+  ])('destildar y volver a tildar deja el rango %i a %i como estaba', async (from, to) => {
     setup({ filters: { includeAmateur: true, from, to } });
     await userEvent.click(check());
     expect(range()).toEqual([Math.max(from, 1950), to < 1950 ? 2015 : to]);
@@ -380,4 +379,64 @@ test('al terminar la carrera el podio y la tabla quedan completos, con o sin mov
     expect(rows()).toHaveLength(3);
     unmount();
   }
+});
+
+describe('link compartido', () => {
+  test('quien abre un link ve que son las reglas de otro y puede armar el suyo', async () => {
+    setup({ fromLink: true });
+    expect(screen.getByRole('heading', { level: 1, name: 'El ranking que te pasaron' })).toBeInTheDocument();
+    expect(screen.getByText(/^Con estas reglas:/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Armá el tuyo' }));
+    expect(useStore.getState()).toMatchObject({ step: 'canchero', fromLink: false });
+  });
+
+  test('sin link, es tu ranking y no hay reglas a la vista', () => {
+    setup();
+    expect(screen.getByRole('heading', { level: 1, name: 'Tu ranking' })).toBeInTheDocument();
+    expect(screen.queryByText(/^Con estas reglas:/)).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Armá el tuyo' })).toBeNull();
+  });
+});
+
+test('si no se puede copiar, el link queda a mano en un campo seleccionable', async () => {
+  setup();
+  Object.defineProperty(navigator, 'clipboard', { value: { writeText: () => Promise.reject(new Error('sin permiso')) }, configurable: true });
+  await userEvent.click(screen.getByRole('button', { name: 'Compartir' }));
+  const field = (await screen.findByLabelText(/Copialo de acá/)) as HTMLInputElement;
+  expect(field.value).toMatch(/\?v=1&m=/);
+});
+
+test('en el celular comparte con el menú del sistema y un texto con el podio', async () => {
+  const shareSpy = vi.fn().mockResolvedValue(undefined);
+  Object.defineProperty(navigator, 'share', { value: shareSpy, configurable: true });
+  const matchMedia = window.matchMedia;
+  window.matchMedia = ((query: string) => ({ ...matchMedia(query), matches: query.includes('pointer: coarse') })) as typeof window.matchMedia;
+  try {
+    setup();
+    await userEvent.click(screen.getByRole('button', { name: 'Compartir' }));
+    expect(shareSpy).toHaveBeenCalledWith(expect.objectContaining({ title: 'Sin Cuentos', text: expect.stringMatching(/^Mi ranking del fútbol argentino: 1\. Beta \d+/) }));
+    expect(screen.queryByText('Link copiado')).toBeNull();
+  } finally {
+    window.matchMedia = matchMedia;
+    Reflect.deleteProperty(navigator, 'share');
+  }
+});
+
+test('al terminar la carrera el foco queda en el título del ranking', () => {
+  setup({ step: 'carrera' });
+  expect(document.activeElement).toHaveTextContent(/^Carrera de 1920 a 2015$/);
+  fireEvent.click(screen.getByRole('button', { name: 'Saltar' }));
+  expect(document.activeElement).toBe(screen.getByRole('heading', { level: 1, name: 'Tu ranking' }));
+});
+
+test('tocar la pista del slider lleva ahí el extremo más cercano, sin arrastrar', () => {
+  const { container } = setup();
+  const track = container.querySelector('.rango-pista') as HTMLElement;
+  // Pista de 228 px: el recorrido útil son 200 px, de 14 a 214.
+  track.getBoundingClientRect = () => ({ left: 0, width: 228, top: 0, height: 32, right: 228, bottom: 32, x: 0, y: 0, toJSON: () => ({}) });
+  fireEvent.pointerDown(track, { clientX: 14 + 20 });
+  expect(useStore.getState().filters).toMatchObject({ from: 1930, to: 2015 });
+  fireEvent.pointerDown(track, { clientX: 14 + 180 });
+  expect(useStore.getState().filters).toMatchObject({ from: 1930, to: 2006 });
+  expect(document.activeElement).toBe(screen.getByLabelText('Hasta'));
 });

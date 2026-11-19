@@ -6,6 +6,13 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  /* Lo que se enfoca con el teclado no queda escondido debajo de la barra fija. */
+  scroll-padding-top: 72px;
+}
+
+/* En modo comparar también está fija la pista con el contador. */
+html:has(.pista-fila.fija) {
+  scroll-padding-top: 168px;
 }
 
 body {
@@ -14,8 +21,17 @@ body {
   color: var(--cal);
   font: 400 16px/1.5 var(--texto);
   background-color: var(--cesped);
+}
+
+/* Las franjas del césped quedan fijas al scrollear. Van en una capa fija y no con background-attachment: fixed,
+   que iOS ignora y que obliga a Chrome a repintar todo el fondo en cada scroll. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
   background-image: repeating-linear-gradient(180deg, var(--cesped) 0 var(--franja), var(--cesped-claro) var(--franja) calc(var(--franja) * 2));
-  background-attachment: fixed;
 }
 
 h1,

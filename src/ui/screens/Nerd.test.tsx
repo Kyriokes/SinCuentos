@@ -19,3 +19,22 @@ test('seis campos con los valores actuales, torneos a la vista y calcular', asyn
   await userEvent.click(screen.getByRole('button', { name: 'Calcular' }));
   expect(useStore.getState().step).toBe('calculo');
 });
+
+test('un decimal, un signo o tres cifras no se aceptan, y borrar no deja el campo en cero', () => {
+  useStore.getState().reset();
+  useStore.getState().start('n');
+  render(<Nerd />);
+  const field = screen.getByLabelText('Liga anual') as HTMLInputElement;
+  for (const bad of ['2.5', '-3', '1e3', '100']) {
+    fireEvent.change(field, { target: { value: bad } });
+    expect(useStore.getState().weights.liga_anual).toBe(2);
+  }
+  fireEvent.change(field, { target: { value: '' } });
+  expect(field.value).toBe('');
+  expect(useStore.getState().weights.liga_anual).toBe(2);
+  fireEvent.change(field, { target: { value: '7' } });
+  expect(useStore.getState().weights.liga_anual).toBe(7);
+  fireEvent.change(field, { target: { value: '' } });
+  fireEvent.blur(field);
+  expect(field.value).toBe('7');
+});

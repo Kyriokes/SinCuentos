@@ -3,9 +3,9 @@
   /* Color */
   --cesped: #14553a;
   --cesped-claro: #175f41;
-  --cesped-sombra: #0e4630;
   --cal: #f4f1e4;
-  --cal-suave: rgb(244 241 228 / 0.72);
+  /* 0.78 llega a 4,5:1 también sobre la franja clara del césped (WCAG 1.4.3). */
+  --cal-suave: rgb(244 241 228 / 0.78);
   --cal-tenue: rgb(244 241 228 / 0.22);
   --tinta: #12372a;
 

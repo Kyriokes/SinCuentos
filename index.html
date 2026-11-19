@@ -4,15 +4,29 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#14553a" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
     <title>Sin Cuentos: el ranking del fútbol argentino con tus reglas</title>
     <meta name="description" content="Decí cuánto vale cada título y mirá el ranking histórico de clubes del fútbol argentino, año por año." />
-    <meta property="og:title" content="Sin Cuentos" />
-    <meta property="og:description" content="El ranking histórico del fútbol argentino, armado con tus reglas." />
+    <meta property="og:site_name" content="Sin Cuentos" />
+    <meta property="og:title" content="Sin Cuentos: armá el ranking del fútbol argentino con tus reglas" />
+    <meta property="og:description" content="Vos decís cuánto vale cada título. Los datos hacen el resto." />
     <meta property="og:type" content="website" />
+    <meta property="og:locale" content="es_AR" />
+    <!-- Con VITE_SITE_URL definida al hacer el build, estas rutas pasan a ser absolutas y se suman og:url y canonical (ver vite.config.ts). -->
+    <meta property="og:image" content="/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Sin Cuentos: el ranking del fútbol argentino, con líneas de puntos que suben año a año sobre el césped." />
+    <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- React reemplaza esto al montar. Si el JS no corre (navegador muy viejo o error), el aviso aparece a los pocos segundos. -->
+      <p class="sin-js">Si en unos segundos no aparece nada, tu navegador no puede abrir Sin Cuentos. Probá con uno actualizado.</p>
+    </div>
+    <noscript><p class="sin-js">Sin Cuentos necesita JavaScript para armar el ranking.</p></noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -17,6 +17,11 @@ export function Calculo() {
   const weights = useStore((s) => s.weights);
   const go = useStore((s) => s.go);
   const root = useRef<HTMLElement>(null);
+  const heading = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    heading.current?.focus({ preventScroll: true });
+  }, []);
 
   useEffect(() => {
     if (reduced) go('carrera');
@@ -41,7 +46,9 @@ export function Calculo() {
 
   return (
     <section className="screen calculo" ref={root}>
-      <p className="paso">Calculando con tus reglas</p>
+      <h1 className="paso" ref={heading} tabIndex={-1}>
+        Calculando con tus reglas
+      </h1>
       <svg className="arco" viewBox="0 0 360 300" aria-hidden="true">
         <g className="calc-net">
           {[100, 130, 160, 190, 220, 250].map((x) => (
@@ -60,7 +67,7 @@ export function Calculo() {
           <path className="pelota-gajo" d="M0 -5L4.8 -1.5L3 4H-3L-4.8 -1.5Z" />
         </g>
       </svg>
-      <ul className="valores">
+      <ul className="valores" role="list">
         {SCORED_ORDER.map((cat) => (
           <li key={cat} className="calc-item">
             <span>{CATEGORY_LABEL[cat]}</span>

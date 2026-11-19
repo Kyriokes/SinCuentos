@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { memo, useId } from 'react';
 import type { Club, Pattern } from '../core/types';
 
 export const PATTERNS: Pattern[] = ['liso', 'bastones', 'aros', 'banda', 'franja', 'mitades', 'v'];
@@ -64,10 +64,14 @@ export function Badge({ club, size }: { club: Club; size: number }) {
   );
 }
 
-export function BadgeIcon({ club, size }: { club: Club; size: number }) {
+/**
+ * Memoizada: el club sale de CLUBS (mismo objeto siempre) y el tamaño es fijo, así que al mover el slider
+ * las decenas de insignias de la tabla no se vuelven a reconciliar.
+ */
+export const BadgeIcon = memo(function BadgeIcon({ club, size }: { club: Club; size: number }) {
   return (
-    <svg width={size} height={size} viewBox="-17 -18 34 36" className="badge-icon" aria-hidden="true">
+    <svg width={size} height={size} viewBox="-17 -18 34 36" aria-hidden="true">
       <Badge club={club} size={32} />
     </svg>
   );
-}
+});

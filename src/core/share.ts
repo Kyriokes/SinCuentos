@@ -9,6 +9,9 @@ export type ShareState =
 /** Más líneas que estas no se distinguen entre sí. */
 export const MAX_SELECTED = 8;
 
+/** Código corto de un club en el link (`e=`). Los datos lo validan con esta misma regla: un código nuevo no puede romper links. */
+export const CLUB_CODE = /^[A-Z0-9]{2,5}$/;
+
 const VERSION = '1';
 
 /** Devuelve la query string, sin el "?" inicial. */
@@ -37,7 +40,8 @@ function decodeWeights(w: string | null): Weights | null {
 function decodeFilters(params: URLSearchParams, bounds: { min: number; max: number }): Filters | null {
   const a = params.get('a');
   if (a !== '0' && a !== '1') return null;
-  const range = /^(\d{4})-(\d{4})$/.exec(params.get('d') ?? '');
+  // Sin ancla al final: si el link llega con un punto o un paréntesis pegado, el rango se lee igual.
+  const range = /^(\d{4})-(\d{4})/.exec(params.get('d') ?? '');
   if (!range) return null;
   const rawFrom = Number(range[1]);
   const rawTo = Number(range[2]);
@@ -51,7 +55,8 @@ function decodeFilters(params: URLSearchParams, bounds: { min: number; max: numb
 /** Una selección mal escrita no rompe el link: se ignora lo que no sirve. */
 function decodeSelected(e: string | null): string[] | undefined {
   if (!e) return undefined;
-  const codes = [...new Set(e.split('.').filter((code) => /^[A-Z0-9]{2,5}$/.test(code)))].slice(0, MAX_SELECTED);
+  // WhatsApp y X a veces pegan al link el punto o el paréntesis que lo sigue en el mensaje: se recorta.
+  const codes = [...new Set(e.split('.').map((code) => code.replace(/[^A-Z0-9]+$/, '')).filter((code) => CLUB_CODE.test(code)))].slice(0, MAX_SELECTED);
   return codes.length ? codes : undefined;
 }
 

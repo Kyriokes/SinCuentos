@@ -74,3 +74,16 @@ describe('clubes elegidos para comparar', () => {
     expect(encodeShare({ ...base, selected: many })).toMatch(/&e=AA\.BB\.CC\.DD\.EE\.FF\.GG\.HH$/);
   });
 });
+
+describe('links que llegan con algo pegado al final', () => {
+  const BOUNDS = { min: 1891, max: 2026 };
+  const base = { mode: 'n' as const, weights: DEFAULT_WEIGHTS, filters: { includeAmateur: true, from: 1900, to: 2000 } };
+
+  test.each(['.', ')', '),', '!'])('un "%s" pegado después del rango no rompe el link', (junk) => {
+    expect(decodeShare(`${encodeShare(base)}${junk}`, BOUNDS)).toEqual(base);
+  });
+
+  test('un paréntesis pegado al último club no lo descarta', () => {
+    expect(decodeShare(`${encodeShare({ ...base, selected: ['BOC', 'RIV'] })})`, BOUNDS)?.selected).toEqual(['BOC', 'RIV']);
+  });
+});
