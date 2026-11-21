@@ -62,6 +62,18 @@ test('el desglose muestra cantidad por valor y los títulos con su fuente', asyn
   expect(within(beta).getAllByRole('link', { name: 'fuente' }).length).toBe(4);
 });
 
+test('el detalle cerrado queda en la página para la búsqueda del navegador, y encontrarlo lo abre', () => {
+  setup();
+  const beta = screen.getAllByTestId('fila')[0];
+  const button = within(beta).getByRole('button');
+  const detail = document.getElementById(button.getAttribute('aria-controls')!)!;
+  expect(detail).toHaveAttribute('hidden', 'until-found');
+  expect(within(detail).getByText(/Copa Intercontinental/)).toBeInTheDocument();
+  fireEvent(detail, new Event('beforematch'));
+  expect(button).toHaveAttribute('aria-expanded', 'true');
+  expect(detail).not.toHaveAttribute('hidden');
+});
+
 test('compartir copia un link que reproduce el estado', async () => {
   const writeText = vi.fn().mockResolvedValue(undefined);
   setup();

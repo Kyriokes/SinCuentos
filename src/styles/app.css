@@ -465,6 +465,7 @@
 .race-tick {
   fill: var(--cal-suave);
   font: 600 11px var(--texto);
+  font-size-adjust: var(--texto-ajuste);
 }
 
 .race-cursor {
@@ -836,8 +837,8 @@
   }
 }
 
-/* El detalle de un club se despliega hacia abajo. */
-.desglose {
+/* El detalle de un club se despliega hacia abajo. Ya está en la página cerrado: la animación arranca al abrirse la fila. */
+.abierta .desglose {
   animation: desplegar 0.18s ease-out both;
 }
 
@@ -889,7 +890,7 @@
   .entra > .paso,
   .entra > .pregunta,
   .entra > .ayuda,
-  .desglose,
+  .abierta .desglose,
   .golpe,
   .aviso:not(:empty) {
     animation: none;
@@ -1125,6 +1126,7 @@
   border-radius: var(--radio);
   background: var(--cesped);
   font: 600 14px/1.4 var(--texto);
+  font-size-adjust: var(--texto-ajuste);
 }
 
 /* Un link de resultado que no se pudo leer. */

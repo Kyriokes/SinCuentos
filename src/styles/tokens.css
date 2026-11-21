@@ -12,6 +12,8 @@
   /* Tipografía */
   --display: 'Big Shoulders Display', 'Arial Narrow', sans-serif;
   --texto: 'Archivo', system-ui, sans-serif;
+  /* Altura de minúsculas de Archivo (526/1000, del archivo de la fuente): va en font-size-adjust. */
+  --texto-ajuste: 0.526;
 
   /* Trazo de cal */
   --trazo: 3px;

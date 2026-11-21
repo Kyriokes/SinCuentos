@@ -1,6 +1,6 @@
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
-import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { firstProfessionalYear, professionalRange, toggleAmateur as toggledRange, type YearRange } from '../../core/range';
 import { computeRanking, computeTimeline, inRange, isVitrina, type ClubResult } from '../../core/score';
 import { encodeShare, MAX_SELECTED } from '../../core/share';
@@ -180,7 +180,19 @@ export function Resultado({ data = REAL }: { data?: ResultadoData }) {
     }
   };
 
-  const titlesOf = (clubId: string) => data.titles.filter((t) => t.clubId === clubId && inRange(t, view)).sort((a, b) => a.year - b.year);
+  // Los detalles de todos los clubes están en la página (cerrados) para que la búsqueda del navegador los encuentre:
+  // los títulos se agrupan una sola vez por rango, no club por club en cada dibujo.
+  const titlesByClub = useMemo(() => {
+    const byClub = new Map<string, Title[]>();
+    for (const t of data.titles) {
+      if (!inRange(t, view)) continue;
+      const list = byClub.get(t.clubId);
+      if (list) list.push(t);
+      else byClub.set(t.clubId, [t]);
+    }
+    for (const list of byClub.values()) list.sort((a, b) => a.year - b.year);
+    return byClub;
+  }, [data.titles, view]);
 
   const controls = (
     <div className="controles">
@@ -332,7 +344,7 @@ export function Resultado({ data = REAL }: { data?: ResultadoData }) {
                   <button
                     type="button"
                     className="fila-btn"
-                    {...(comparing ? { 'aria-pressed': isLit, 'aria-disabled': full } : { 'aria-expanded': isOpen })}
+                    {...(comparing ? { 'aria-pressed': isLit, 'aria-disabled': full } : { 'aria-expanded': isOpen, 'aria-controls': `detalle-${r.clubId}` })}
                     onClick={() => (comparing ? toggleClub(r.clubId) : setOpen(isOpen ? null : r.clubId))}
                   >
                     <span className="display puesto">
@@ -359,7 +371,17 @@ export function Resultado({ data = REAL }: { data?: ResultadoData }) {
                       </svg>
                     )}
                   </button>
-                  {isOpen && <Desglose result={r} weights={weights} titles={titlesOf(r.clubId)} competitionName={competitionName} />}
+                  {!comparing && (
+                    <Desglose
+                      id={`detalle-${r.clubId}`}
+                      open={isOpen}
+                      onReveal={() => setOpen(r.clubId)}
+                      result={r}
+                      weights={weights}
+                      titles={titlesByClub.get(r.clubId) ?? []}
+                      competitionName={competitionName}
+                    />
+                  )}
                 </li>
               );
             })}
@@ -471,37 +493,67 @@ function Podio({ ranking, clubById, reveal }: { ranking: ClubResult[]; clubById:
 }
 
 interface DesgloseProps {
+  id: string;
+  open: boolean;
+  /** La búsqueda del navegador encontró algo adentro y lo está abriendo. */
+  onReveal(): void;
   result: ClubResult;
   weights: Weights;
   titles: Title[];
   competitionName: Map<string, string>;
 }
 
-function Desglose({ result, weights, titles, competitionName }: DesgloseProps) {
+/**
+ * Cerrado queda con hidden="until-found": no se ve, pero Ctrl+F encuentra sus títulos y lo abre solo.
+ * React trata `hidden` como verdadero o falso, así que el valor se pone a mano. Donde el navegador no conoce
+ * until-found, queda oculto como cualquier hidden y se abre con la fila, igual que antes.
+ */
+function Desglose({ id, open, onReveal, result, weights, titles, competitionName }: DesgloseProps) {
+  const box = useRef<HTMLDivElement>(null);
+  const reveal = useRef(onReveal);
+  reveal.current = onReveal;
+
+  useLayoutEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    if (open) el.removeAttribute('hidden');
+    else el.setAttribute('hidden', 'until-found');
+  }, [open]);
+
+  useEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const onMatch = () => reveal.current();
+    el.addEventListener('beforematch', onMatch);
+    return () => el.removeEventListener('beforematch', onMatch);
+  }, []);
+
   return (
-    <div className="desglose">
-      <dl>
-        {SCORED_ORDER.filter((cat) => result.counts[cat] > 0).map((cat) => (
-          <div key={cat}>
-            <dt>{CATEGORY_LABEL[cat]}</dt>
-            <dd>{`${result.counts[cat]} × ${weights[cat]} = ${result.counts[cat] * weights[cat]}`}</dd>
-          </div>
-        ))}
-      </dl>
-      <ul className="titulos" role="list">
-        {titles.map((t, i) => (
-          <li key={i} className={isVitrina(t.category) ? 'en-vitrina' : undefined}>
-            <span className="anio">{t.year}</span>
-            <span>
-              {competitionName.get(t.competitionId) ?? t.competitionId}
-              {t.edition ? ` (${t.edition})` : ''}
-            </span>
-            <a href={t.source} target="_blank" rel="noreferrer">
-              fuente
-            </a>
-          </li>
-        ))}
-      </ul>
+    <div id={id} ref={box} className="detalle">
+      <div className="desglose">
+        <dl>
+          {SCORED_ORDER.filter((cat) => result.counts[cat] > 0).map((cat) => (
+            <div key={cat}>
+              <dt>{CATEGORY_LABEL[cat]}</dt>
+              <dd>{`${result.counts[cat]} × ${weights[cat]} = ${result.counts[cat] * weights[cat]}`}</dd>
+            </div>
+          ))}
+        </dl>
+        <ul className="titulos" role="list">
+          {titles.map((t, i) => (
+            <li key={i} className={isVitrina(t.category) ? 'en-vitrina' : undefined}>
+              <span className="anio">{t.year}</span>
+              <span>
+                {competitionName.get(t.competitionId) ?? t.competitionId}
+                {t.edition ? ` (${t.edition})` : ''}
+              </span>
+              <a href={t.source} target="_blank" rel="noreferrer">
+                fuente
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }

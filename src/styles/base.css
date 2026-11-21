@@ -6,6 +6,10 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  /* La página es siempre oscura: así la barra de scroll y los controles propios del navegador no salen claros. */
+  color-scheme: dark;
+  /* Barra clara sobre el césped: se distingue bien de la pista. */
+  scrollbar-color: var(--cal-suave) var(--cesped);
   /* Lo que se enfoca con el teclado no queda escondido debajo de la barra fija. */
   scroll-padding-top: 72px;
 }
@@ -20,7 +24,16 @@ body {
   min-height: 100dvh;
   color: var(--cal);
   font: 400 16px/1.5 var(--texto);
+  /* Mientras carga Archivo, la letra del sistema se ajusta a su altura de minúsculas: el texto no cambia de
+     tamaño ni se acomoda distinto cuando llega. Va después de `font`, que lo reinicia. */
+  font-size-adjust: var(--texto-ajuste);
   background-color: var(--cesped);
+}
+
+/* Lo que se selecciona se invierte, como todo lo que responde en la página. */
+::selection {
+  background: var(--cal);
+  color: var(--tinta);
 }
 
 /* Las franjas del césped quedan fijas al scrollear. Van en una capa fija y no con background-attachment: fixed,
@@ -86,6 +99,9 @@ svg {
 
 .display {
   font-family: var(--display);
+  /* Sin ajuste: Big Shoulders es mucho más angosta que cualquier reemplazo, y agrandarlo para igualar la altura
+     lo haría todavía más ancho. */
+  font-size-adjust: none;
   font-weight: 900;
   line-height: 0.92;
   letter-spacing: 0.01em;
